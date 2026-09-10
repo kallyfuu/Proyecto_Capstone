@@ -1,0 +1,3 @@
+# Volcados de la JVM cuando Gradle o el sdkmanager se caen
+hs_err_pid*.log
+replay_pid*.log
