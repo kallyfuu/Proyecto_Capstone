@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/cliente_saldo.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
+import 'nuevo_cliente_sheet.dart';
 import 'registrar_movimiento_sheet.dart';
 
 /// Pantalla principal: quien me debe y cuanto.
@@ -90,6 +91,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  /// Da de alta un cliente y vuelve a cargar la lista para que aparezca.
+  Future<void> _nuevoCliente() async {
+    final creado = await NuevoClienteSheet.mostrar(context);
+    if (!creado || !mounted) return;
+
+    await _cargar();
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Cliente agregado'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,6 +121,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       body: _cuerpo(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _nuevoCliente,
+        backgroundColor: AppTheme.azulProfundo,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.person_add_alt),
+        label: const Text('Nuevo cliente'),
+      ),
     );
   }
 
@@ -126,7 +150,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         icono: Icons.people_outline,
         color: AppTheme.textoTenue,
         titulo: 'Todavía no hay clientes',
-        detalle: 'Cuando agregues uno, aparecerá acá con su saldo.',
+        detalle: 'Agrega el primero y podrás empezar a registrarle fiados.',
+        accion: FilledButton.icon(
+          onPressed: _nuevoCliente,
+          icon: const Icon(Icons.person_add_alt),
+          label: const Text('Agregar cliente'),
+        ),
       );
     }
 
@@ -284,6 +313,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required Color color,
     required String titulo,
     required String detalle,
+    Widget? accion,
   }) {
     return Center(
       child: Padding(
@@ -303,6 +333,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppTheme.textoTenue),
             ),
+            if (accion != null) ...[
+              const SizedBox(height: 24),
+              accion,
+            ],
           ],
         ),
       ),
