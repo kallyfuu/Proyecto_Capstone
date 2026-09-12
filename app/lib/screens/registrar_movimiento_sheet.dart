@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import 'historial_movimientos_screen.dart';
 
 import '../models/cliente_saldo.dart';
 import '../theme/app_theme.dart';
@@ -213,6 +214,19 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
                           ? '${_esFiado ? "Fiar" : "Abonar"} ${formatoCLP(_monto)}'
                           : (_esFiado ? 'Registrar fiado' : 'Registrar abono'),
                     ),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: _guardando
+                  ? null
+                  : () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              HistorialMovimientosScreen(cliente: widget.cliente),
+                        ),
+                      ),
+              icon: const Icon(Icons.history),
+              label: const Text('Ver historial'),
             ),
           ],
         ),
