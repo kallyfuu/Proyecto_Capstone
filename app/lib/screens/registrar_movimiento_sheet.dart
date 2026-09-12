@@ -109,7 +109,14 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
           color: AppTheme.superficie,
           borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
         ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        // Ver nota en nuevo_cliente_sheet.dart: el area segura evita que la
+        // barra de navegacion del celular tape el boton.
+        padding: EdgeInsets.fromLTRB(
+          20,
+          12,
+          20,
+          24 + MediaQuery.of(context).padding.bottom,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
