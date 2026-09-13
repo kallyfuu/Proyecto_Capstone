@@ -27,6 +27,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _negocio = 'Mi almacén';
   List<ClienteSaldo> _clientes = const [];
   String _busqueda = '';
+  int _clientesVisibles = 15;
   bool _cargando = true;
   String? _error;
 
@@ -164,6 +165,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final nombre = cliente.nombre.toLowerCase();
       return nombre.contains(_busqueda.trim().toLowerCase());
     }).toList();
+    final clientesVisibles = clientesFiltrados.take(_clientesVisibles).toList();
 
     return RefreshIndicator(
       onRefresh: _cargar,
@@ -180,7 +182,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 16),
           TextField(
-            onChanged: (v) => setState(() => _busqueda = v),
+            onChanged: (v) => setState(() {
+              _busqueda = v;
+              _clientesVisibles = 15;
+            }),
             decoration: const InputDecoration(
               hintText: 'Buscar cliente por nombre',
               prefixIcon: Icon(Icons.search),
@@ -202,7 +207,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-            for (final cliente in clientesFiltrados) _filaCliente(cliente),
+            for (final cliente in clientesVisibles) _filaCliente(cliente),
+            if (clientesVisibles.length < clientesFiltrados.length)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: OutlinedButton.icon(
+                  onPressed: () => setState(() {
+                    _clientesVisibles += 15;
+                  }),
+                  icon: const Icon(Icons.expand_more),
+                  label: const Text('Cargar más'),
+                ),
+              ),
           ],
         ],
       ),
