@@ -26,6 +26,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // simplemente volver a llamar a _cargar() y pisar estas variables.
   String _negocio = 'Mi almacén';
   List<ClienteSaldo> _clientes = const [];
+  String _busqueda = '';
+  int _clientesVisibles = 15;
   bool _cargando = true;
   String? _error;
 
@@ -159,32 +161,78 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }
 
-    final totalFiado = _clientes
-        .where((c) => c.debe)
-        .fold<int>(0, (suma, c) => suma + c.saldo.abs());
-    final cuantosDeben = _clientes.where((c) => c.debe).length;
+    final clientesFiltrados = _clientes.where((cliente) {
+      final nombre = cliente.nombre.toLowerCase();
+      return nombre.contains(_busqueda.trim().toLowerCase());
+    }).toList();
+    final clientesVisibles = clientesFiltrados.take(_clientesVisibles).toList();
 
     return RefreshIndicator(
       onRefresh: _cargar,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          _tarjetaResumen(totalFiado, cuantosDeben, _clientes.length),
-          const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(
-              'CLIENTES',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.1,
-                color: AppTheme.textoTenue.withValues(alpha: 0.9),
-              ),
+          _tarjetaResumen(
+            _clientes.where((c) => c.debe).fold<int>(
+              0,
+              (suma, c) => suma + c.saldo.abs(),
+            ),
+            _clientes.where((c) => c.debe).length,
+            _clientes.length,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            onChanged: (v) => setState(() {
+              _busqueda = v;
+              _clientesVisibles = 15;
+            }),
+            decoration: const InputDecoration(
+              hintText: 'Buscar cliente por nombre',
+              prefixIcon: Icon(Icons.search),
             ),
           ),
-          for (final cliente in _clientes) _filaCliente(cliente),
+          const SizedBox(height: 20),
+          if (clientesFiltrados.isEmpty)
+            _mensajeListaVacia()
+          else ...[
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 8),
+              child: Text(
+                'CLIENTES',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.1,
+                  color: AppTheme.textoTenue.withValues(alpha: 0.9),
+                ),
+              ),
+            ),
+            for (final cliente in clientesVisibles) _filaCliente(cliente),
+            if (clientesVisibles.length < clientesFiltrados.length)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: OutlinedButton.icon(
+                  onPressed: () => setState(() {
+                    _clientesVisibles += 15;
+                  }),
+                  icon: const Icon(Icons.expand_more),
+                  label: const Text('Cargar más'),
+                ),
+              ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _mensajeListaVacia() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 48),
+      child: Center(
+        child: Text(
+          'No hay clientes con ese nombre',
+          style: const TextStyle(color: AppTheme.textoTenue),
+        ),
       ),
     );
   }
