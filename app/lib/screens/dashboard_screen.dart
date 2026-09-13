@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/cliente_saldo.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
+import '../utils/texto.dart';
 import 'nuevo_cliente_sheet.dart';
 import 'registrar_movimiento_sheet.dart';
 
@@ -161,9 +162,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }
 
+    // Normalizamos los dos lados para que "maria" encuentre a "María" y
+    // "munoz" encuentre a "Muñoz": en el mostrador nadie escribe con tilde.
+    final busqueda = normalizar(_busqueda);
     final clientesFiltrados = _clientes.where((cliente) {
-      final nombre = cliente.nombre.toLowerCase();
-      return nombre.contains(_busqueda.trim().toLowerCase());
+      return normalizar(cliente.nombre).contains(busqueda);
     }).toList();
     final clientesVisibles = clientesFiltrados.take(_clientesVisibles).toList();
 
