@@ -109,12 +109,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  /// Muestra el modal para escanear tarjeta o llavero NFC.
+  void _leerNfc() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.azulProfundo.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.nfc,
+                  size: 56,
+                  color: AppTheme.azulProfundo,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Listo para escanear',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Acerca la tarjeta o llavero NFC al dispositivo para identificar al cliente.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppTheme.textoTenue, fontSize: 14),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancelar'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(_negocio),
         actions: [
+          IconButton(
+            tooltip: 'Lista de clientes',
+            icon: const Icon(Icons.people_outline),
+            onPressed: _mostrarListaClientes,
+          ),
           IconButton(
             tooltip: 'Cerrar sesión',
             icon: const Icon(Icons.logout),
@@ -123,13 +180,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       body: _cuerpo(),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _nuevoCliente,
-        backgroundColor: AppTheme.azulProfundo,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.person_add_alt),
-        label: const Text('Nuevo cliente'),
-      ),
     );
   }
 
@@ -147,80 +197,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }
 
-    if (_clientes.isEmpty) {
-      return _mensajeCentrado(
-        icono: Icons.people_outline,
-        color: AppTheme.textoTenue,
-        titulo: 'Todavía no hay clientes',
-        detalle: 'Agrega el primero y podrás empezar a registrarle fiados.',
-        accion: FilledButton.icon(
-          onPressed: _nuevoCliente,
-          icon: const Icon(Icons.person_add_alt),
-          label: const Text('Agregar cliente'),
-        ),
-      );
-    }
-
-    final clientesFiltrados = _clientes.where((cliente) {
-      final nombre = cliente.nombre.toLowerCase();
-      return nombre.contains(_busqueda.trim().toLowerCase());
-    }).toList();
-    final clientesVisibles = clientesFiltrados.take(_clientesVisibles).toList();
+    final totalFiado = _clientes.where((c) => c.debe).fold<int>(
+          0,
+          (suma, c) => suma + c.saldo.abs(),
+        );
+    final cuantosDeben = _clientes.where((c) => c.debe).length;
+    final totalClientes = _clientes.length;
 
     return RefreshIndicator(
       onRefresh: _cargar,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        children: [
-          _tarjetaResumen(
-            _clientes.where((c) => c.debe).fold<int>(
-              0,
-              (suma, c) => suma + c.saldo.abs(),
-            ),
-            _clientes.where((c) => c.debe).length,
-            _clientes.length,
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            onChanged: (v) => setState(() {
-              _busqueda = v;
-              _clientesVisibles = 15;
-            }),
-            decoration: const InputDecoration(
-              hintText: 'Buscar cliente por nombre',
-              prefixIcon: Icon(Icons.search),
-            ),
-          ),
-          const SizedBox(height: 20),
-          if (clientesFiltrados.isEmpty)
-            _mensajeListaVacia()
-          else ...[
-            Padding(
-              padding: const EdgeInsets.only(left: 4, bottom: 8),
-              child: Text(
-                'CLIENTES',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.1,
-                  color: AppTheme.textoTenue.withValues(alpha: 0.9),
-                ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final diametro = (constraints.maxWidth * 0.80).clamp(240.0, 320.0);
+
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight - 48,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _botonCircularNfc(diametro),
+                  _tarjetaResumen(totalFiado, cuantosDeben, totalClientes),
+                ],
               ),
             ),
-            for (final cliente in clientesVisibles) _filaCliente(cliente),
-            if (clientesVisibles.length < clientesFiltrados.length)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: OutlinedButton.icon(
-                  onPressed: () => setState(() {
-                    _clientesVisibles += 15;
-                  }),
-                  icon: const Icon(Icons.expand_more),
-                  label: const Text('Cargar más'),
-                ),
-              ),
-          ],
-        ],
+          );
+        },
       ),
     );
   }
@@ -237,47 +243,265 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  /// El numero que le importa al almacenero: cuanta plata tiene en la calle.
+  /// Botón circular grande que ocupa casi toda la pantalla para leer NFC.
+  Widget _botonCircularNfc(double diametro) {
+    return Center(
+      child: Container(
+        width: diametro,
+        height: diametro,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppTheme.azulClaro, AppTheme.azulProfundo],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.azulProfundo.withValues(alpha: 0.35),
+              blurRadius: 26,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: _leerNfc,
+            splashColor: Colors.white.withValues(alpha: 0.2),
+            highlightColor: Colors.white.withValues(alpha: 0.1),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.nfc,
+                    size: 72,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Leer NFC',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Toca para escanear',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Tarjeta con el total fiado, tocable para ver el detalle de clientes.
   Widget _tarjetaResumen(int totalFiado, int cuantosDeben, int totalClientes) {
     final palabraClientes = totalClientes == 1 ? 'cliente' : 'clientes';
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      constraints: const BoxConstraints(maxWidth: 380),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppTheme.azulProfundo, AppTheme.azulClaro],
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Total fiado',
-            style: TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            formatoCLP(totalFiado),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 38,
-              fontWeight: FontWeight.bold,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            cuantosDeben == 0
-                ? 'Nadie te debe. $totalClientes $palabraClientes al día.'
-                : '$cuantosDeben de $totalClientes $palabraClientes con deuda',
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE8EAED)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: _mostrarListaClientes,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            child: Column(
+              children: [
+                const Text(
+                  'Total fiado',
+                  style: TextStyle(
+                    color: AppTheme.textoTenue,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  formatoCLP(totalFiado),
+                  style: const TextStyle(
+                    color: AppTheme.azulProfundo,
+                    fontSize: 34,
+                    fontWeight: FontWeight.bold,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      cuantosDeben == 0
+                          ? 'Nadie te debe. $totalClientes $palabraClientes al día.'
+                          : '$cuantosDeben de $totalClientes $palabraClientes con deuda',
+                      style: const TextStyle(
+                        color: AppTheme.textoTenue,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.chevron_right,
+                      size: 18,
+                      color: AppTheme.textoTenue,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Despliega la lista y búsqueda de clientes en un modal inferior.
+  void _mostrarListaClientes() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final clientesFiltrados = _clientes.where((cliente) {
+              final nombre = cliente.nombre.toLowerCase();
+              return nombre.contains(_busqueda.trim().toLowerCase());
+            }).toList();
+            final clientesVisibles =
+                clientesFiltrados.take(_clientesVisibles).toList();
+
+            return DraggableScrollableSheet(
+              initialChildSize: 0.85,
+              minChildSize: 0.5,
+              maxChildSize: 0.95,
+              expand: false,
+              builder: (_, scrollController) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Clientes',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              await _nuevoCliente();
+                            },
+                            icon: const Icon(Icons.person_add_alt),
+                            label: const Text('Nuevo'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        onChanged: (v) {
+                          setState(() => _busqueda = v);
+                          setSheetState(() => _busqueda = v);
+                        },
+                        decoration: const InputDecoration(
+                          hintText: 'Buscar cliente por nombre',
+                          prefixIcon: Icon(Icons.search),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: clientesFiltrados.isEmpty
+                            ? _mensajeListaVacia()
+                            : ListView.builder(
+                                controller: scrollController,
+                                itemCount: clientesVisibles.length +
+                                    (clientesVisibles.length <
+                                            clientesFiltrados.length
+                                        ? 1
+                                        : 0),
+                                itemBuilder: (context, index) {
+                                  if (index < clientesVisibles.length) {
+                                    final c = clientesVisibles[index];
+                                    return _filaCliente(c);
+                                  }
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 4, bottom: 16),
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        setState(
+                                            () => _clientesVisibles += 15);
+                                        setSheetState(
+                                            () => _clientesVisibles += 15);
+                                      },
+                                      icon: const Icon(Icons.expand_more),
+                                      label: const Text('Cargar más'),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 
