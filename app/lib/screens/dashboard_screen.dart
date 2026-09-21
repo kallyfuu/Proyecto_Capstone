@@ -123,7 +123,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: _cuerpo(),
+      // En un celular esto no hace nada (la pantalla es mas angosta), pero en
+      // un navegador maximizado evita que las tarjetas se estiren a lo ancho
+      // de todo el monitor y la lista quede ilegible.
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: _cuerpo(),
+        ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _nuevoCliente,
         backgroundColor: AppTheme.azulProfundo,
