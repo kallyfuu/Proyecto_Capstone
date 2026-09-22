@@ -1,4 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Lectura del llavero NFC del cliente. -->
+    <uses-permission android:name="android.permission.NFC"/>
+
+    <!-- required="false" a proposito: la app tiene que poder instalarse en un
+         celular sin NFC. Ese almacenero pierde el llavero pero sigue pudiendo
+         buscar al cliente por nombre y registrarle fiados. -->
+    <uses-feature android:name="android.hardware.nfc" android:required="false"/>
+
     <application
         android:label="fiado_nfc"
         android:name="${applicationName}"

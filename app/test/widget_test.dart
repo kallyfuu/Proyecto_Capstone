@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fiado_nfc/theme/app_theme.dart';
 import 'package:fiado_nfc/utils/formato.dart';
+import 'package:fiado_nfc/services/lector_nfc.dart';
 import 'package:fiado_nfc/utils/texto.dart';
 
 void main() {
@@ -51,6 +52,20 @@ void main() {
 
     test('Un texto sin tildes queda igual', () {
       expect(normalizar('Juan Perez'), 'juan perez');
+    });
+  });
+
+  group('Lectura del llavero NFC', () {
+    test('El UID se muestra en hexadecimal con dos puntos', () {
+      expect(LectorNfc.uidEnHex([4, 162, 63, 25]), '04:A2:3F:19');
+    });
+
+    test('Los bytes chicos se rellenan con cero a la izquierda', () {
+      expect(LectorNfc.uidEnHex([0, 15, 255]), '00:0F:FF');
+    });
+
+    test('Un llavero sin identificador no revienta', () {
+      expect(LectorNfc.uidEnHex([]), '');
     });
   });
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/cliente_saldo.dart';
+import '../services/lector_nfc.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
 import '../utils/texto.dart';
@@ -94,6 +95,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  /// PROVISIONAL: lee un llavero y muestra el UID en crudo.
+  ///
+  /// Sirve para dos cosas ahora: comprobar que el lector funciona en el
+  /// telefono, y anotar el UID de cada llavero numerado para poder asociarlos.
+  /// Felipe reemplaza el contenido de este metodo por su hoja de lectura; el
+  /// boton de la barra superior ya esta puesto, no hay que agregar otro.
+  Future<void> _leerLlavero() async {
+    final estado = await LectorNfc.estado();
+    if (!mounted) return;
+
+    if (estado == EstadoNfc.apagado) {
+      _aviso('El NFC está apagado. Actívalo en los ajustes del teléfono.');
+      return;
+    }
+
+    _aviso(
+      estado == EstadoNfc.noSoportado
+          ? 'Este equipo no tiene NFC: se usará un llavero de prueba.'
+          : 'Acerca el llavero a la parte de atrás del teléfono...',
+    );
+
+    final uid = await LectorNfc.leerUid();
+    if (!mounted) return;
+
+    if (uid == null) {
+      _aviso('No se leyó ningún llavero.');
+      return;
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Llavero leído'),
+        content: SelectableText(
+          uid,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _aviso(String texto) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(texto), behavior: SnackBarBehavior.floating),
+    );
+  }
+
   /// Da de alta un cliente y vuelve a cargar la lista para que aparezca.
   Future<void> _nuevoCliente() async {
     final creado = await NuevoClienteSheet.mostrar(context);
@@ -116,6 +170,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: Text(_negocio),
         actions: [
+          IconButton(
+            tooltip: 'Leer llavero',
+            icon: const Icon(Icons.nfc),
+            onPressed: _leerLlavero,
+          ),
           IconButton(
             tooltip: 'Cerrar sesión',
             icon: const Icon(Icons.logout),
