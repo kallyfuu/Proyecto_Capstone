@@ -108,7 +108,7 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M3 9l1-5h16l1 5"/><path d="M4 9v11h16V9"/><path d="M3 9h18"/>
     </svg>
-    <span>Mi cuenta en el almacén</span>
+    <span>Mi cuenta en el negocio</span>
   </div>
 
   <div id="contenido">
@@ -165,12 +165,12 @@
 
     var encabezado =
       '<div class="resumen">' +
-        '<div class="quien">' + escapar(datos.negocio || 'Tu almacén') + '</div>' +
+        '<div class="quien">' + escapar(datos.negocio || 'Tu negocio') + '</div>' +
         '<div class="nombre">' + escapar(datos.cliente || '') + '</div>' +
         '<div class="etiqueta">' + (debe ? 'Debes' : 'Tu saldo') + '</div>' +
         '<div class="monto">' + (debe ? pesos(saldo) : (saldo === 0 ? 'Al día' : pesos(saldo) + ' a favor')) + '</div>' +
         '<div class="nota">' +
-          (debe ? 'Puedes abonar cuando quieras en el almacén.'
+          (debe ? 'Puedes abonar cuando quieras en el negocio.'
                 : 'No tienes deudas pendientes. ¡Gracias!') +
         '</div>' +
       '</div>';
@@ -196,8 +196,8 @@
     }
 
     caja.innerHTML = encabezado + lista +
-      '<div class="pie">Esta cuenta la lleva tu almacén.<br>' +
-      'Si ves algo que no calza, conversa con el almacenero.</div>';
+      '<div class="pie">Esta cuenta la lleva tu negocio.<br>' +
+      'Si ves algo que no calza, conversa con el vendedor.</div>';
   }
 
   function parametro(nombre) {
@@ -208,7 +208,7 @@
 
   if (!token) {
     aviso('🔑', 'Falta tu enlace',
-      'Abre el enlace completo que te dio tu almacén, o acerca tu llavero al teléfono.');
+      'Abre el enlace completo que te dio tu negocio, o acerca tu llavero al teléfono.');
     return;
   }
 
@@ -230,7 +230,7 @@
     // que es lo que pasa si el cliente pierde el llavero y lo damos de baja.
     if (!datos) {
       aviso('🔒', 'Este enlace ya no está activo',
-        'Puede que hayas cambiado de llavero. Pídele uno nuevo a tu almacén.');
+        'Puede que hayas cambiado de llavero. Pídele uno nuevo a tu negocio.');
       return;
     }
     pintar(datos);

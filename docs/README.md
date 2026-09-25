@@ -1,17 +1,17 @@
 # Portal del cliente
 
-Página pública donde el cliente del almacén consulta su deuda sin instalar
+Página pública donde el cliente del negocio consulta su deuda sin instalar
 nada y sin crear una cuenta. Corresponde al requerimiento RF04.
 
 **Se abre así:** `.../portal/?token=<token del cliente>`
 
-Cada cliente tiene un `token_portal` único en la base de datos. El almacenero
+Cada cliente tiene un `token_portal` único en la base de datos. El vendedor
 le comparte ese enlace, y más adelante el token irá grabado en el llavero NFC
 para que baste con acercarlo al teléfono.
 
 ## Por qué es una página suelta y no parte de la app
 
-La app Flutter es la herramienta de trabajo del almacenero: la usa todos los
+La app Flutter es la herramienta de trabajo del vendedor: la usa todos los
 días y la tiene instalada. El portal lo abre el cliente una vez cada tanto,
 parado en la calle y con datos móviles.
 
