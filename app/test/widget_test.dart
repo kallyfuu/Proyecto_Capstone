@@ -67,5 +67,15 @@ void main() {
     test('Un llavero sin identificador no revienta', () {
       expect(LectorNfc.uidEnHex([]), '');
     });
+
+    test('EstadoNfc distingue apagado de no soportado', () {
+      expect(EstadoNfc.apagado != EstadoNfc.noSoportado, isTrue);
+      expect(EstadoNfc.disponible != EstadoNfc.apagado, isTrue);
+    });
+
+    test('LectorNfc tiene un UID de prueba para desarrollo', () {
+      expect(LectorNfc.uidDePrueba.isNotEmpty, isTrue);
+      expect(LectorNfc.uidDePrueba.split(':').length, greaterThanOrEqualTo(4));
+    });
   });
 }
