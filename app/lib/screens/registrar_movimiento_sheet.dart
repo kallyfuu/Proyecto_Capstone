@@ -5,10 +5,12 @@ import 'package:uuid/uuid.dart';
 import 'historial_movimientos_screen.dart';
 
 import '../models/cliente_saldo.dart';
+import '../services/lector_nfc.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
 
-/// Registrar un fiado o un abono para un cliente.
+/// Registrar un fiado o un abono para un cliente, y asociar/desvincular su
+/// llavero NFC.
 ///
 /// Se abre desde la lista, con el cliente ya elegido, porque en el almacen el
 /// cliente esta parado al frente: lo que falta es el monto, no a quien.
@@ -41,11 +43,52 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
   bool _guardando = false;
   String? _error;
 
+  // El llavero NO sale de widget.cliente: ClienteSaldo viene de la vista
+  // v_clientes_saldo, y no sabemos con certeza si esa vista expone nfc_uid.
+  // Para no asumirlo, se consulta aparte directo a la tabla `clientes`,
+  // que es donde de verdad vive esa columna.
+  String? _nfcUid;
+  bool _cargandoLlavero = true;
+  bool _leyendoLlavero = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarLlavero();
+  }
+
   @override
   void dispose() {
     _montoCtrl.dispose();
     _conceptoCtrl.dispose();
+    // Si cierran la hoja mientras el lector esperaba un llavero, hay que
+    // cortar la sesion NFC o queda prendida gastando bateria.
+    LectorNfc.cancelar();
     super.dispose();
+  }
+
+  /// Pregunta directo a la tabla `clientes` si este cliente ya tiene un
+  /// llavero. Si la consulta falla, no bloqueamos el resto de la hoja: solo
+  /// se muestra el boton "Asociar llavero" y, si en realidad ya tenia uno,
+  /// se corrige la proxima vez que se abra esta hoja.
+  Future<void> _cargarLlavero() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final fila = await supabase
+          .from('clientes')
+          .select('nfc_uid')
+          .eq('id', widget.cliente.id)
+          .maybeSingle();
+
+      if (!mounted) return;
+      setState(() {
+        _nfcUid = fila?['nfc_uid']?.toString();
+        _cargandoLlavero = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _cargandoLlavero = false);
+    }
   }
 
   int get _monto => int.tryParse(_montoCtrl.text.replaceAll('.', '')) ?? 0;
@@ -93,6 +136,112 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
         _error = 'No se pudo guardar: $e';
       });
     }
+  }
+
+  /// Espera un llavero y lo asocia a este cliente.
+  Future<void> _asociarLlavero() async {
+    setState(() {
+      _leyendoLlavero = true;
+      _error = null;
+    });
+
+    final uid = await LectorNfc.leerUid();
+
+    if (!mounted) return;
+
+    if (uid == null) {
+      setState(() {
+        _leyendoLlavero = false;
+        _error = 'No se leyó ningún llavero. Intenta de nuevo.';
+      });
+      return;
+    }
+
+    try {
+      final supabase = Supabase.instance.client;
+
+      await supabase
+          .from('clientes')
+          .update({'nfc_uid': uid})
+          .eq('id', widget.cliente.id);
+
+      if (!mounted) return;
+      setState(() {
+        _nfcUid = uid;
+        _leyendoLlavero = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _leyendoLlavero = false;
+        _error = _mensajeAmigableLlavero('$e');
+      });
+    }
+  }
+
+  /// Quita el llavero de este cliente (por ejemplo, si lo perdio).
+  Future<void> _desvincularLlavero() async {
+    // Confirmacion antes de desvincular: es una accion que puede dejar al
+    // cliente sin forma de identificarse hasta que le asocien uno nuevo.
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('¿Desvincular llavero?'),
+        content: const Text(
+          'El cliente no va a poder identificarse con este llavero hasta '
+          'que le asocies uno nuevo.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Desvincular'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true || !mounted) return;
+
+    setState(() {
+      _leyendoLlavero = true;
+      _error = null;
+    });
+
+    try {
+      final supabase = Supabase.instance.client;
+
+      await supabase
+          .from('clientes')
+          .update({'nfc_uid': null})
+          .eq('id', widget.cliente.id);
+
+      if (!mounted) return;
+      setState(() {
+        _nfcUid = null;
+        _leyendoLlavero = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _leyendoLlavero = false;
+        _error = 'No se pudo desvincular: $e';
+      });
+    }
+  }
+
+  /// Mismo criterio que en nuevo_cliente_sheet.dart: el codigo 23505 es
+  /// Postgres diciendo "esto ya existe". Aca significa que el llavero ya
+  /// esta asignado a otro cliente de este mismo negocio (la base no permite
+  /// que dos clientes del mismo negocio compartan nfc_uid).
+  String _mensajeAmigableLlavero(String error) {
+    if (error.contains('23505')) {
+      return 'Ese llavero ya está asignado a otro cliente.';
+    }
+    return 'No se pudo asociar: $error';
   }
 
   @override
@@ -149,7 +298,9 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            _seccionLlavero(),
+            const SizedBox(height: 18),
             SegmentedButton<bool>(
               segments: const [
                 ButtonSegment(
@@ -238,6 +389,63 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Fila de la seccion de llavero: cambia segun el cliente ya tenga uno,
+  /// no tenga ninguno, o estemos esperando que acerquen uno.
+  Widget _seccionLlavero() {
+    if (_cargandoLlavero) {
+      return const Row(
+        children: [
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2.5),
+          ),
+          SizedBox(width: 12),
+          Text('Verificando llavero...'),
+        ],
+      );
+    }
+
+    if (_leyendoLlavero) {
+      return const Row(
+        children: [
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2.5),
+          ),
+          SizedBox(width: 12),
+          Text('Acerca el llavero a la parte de atrás del teléfono...'),
+        ],
+      );
+    }
+
+    if (_nfcUid == null) {
+      return OutlinedButton.icon(
+        onPressed: _asociarLlavero,
+        icon: const Icon(Icons.nfc),
+        label: const Text('Asociar llavero'),
+      );
+    }
+
+    return Row(
+      children: [
+        const Icon(Icons.nfc, color: AppTheme.cumplidor),
+        const SizedBox(width: 10),
+        const Expanded(
+          child: Text(
+            'Llavero asociado',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+        TextButton(
+          onPressed: _desvincularLlavero,
+          child: const Text('Desvincular'),
+        ),
+      ],
     );
   }
 }
