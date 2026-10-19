@@ -146,27 +146,11 @@ class _PanelScreenState extends State<PanelScreen> {
     final recuperado = r.porcentajeRecuperado;
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _Indicador(
-                etiqueta: 'En la calle',
-                valor: formatoCLP(r.totalFiado),
-                detalle:
-                    '${r.clientesConDeuda} ${r.clientesConDeuda == 1 ? "cliente debe" : "clientes deben"}',
-                destacado: true,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _Indicador(
-                etiqueta: 'Deuda promedio',
-                valor: formatoCLP(r.deudaPromedio),
-                detalle: 'por cliente que debe',
-              ),
-            ),
-          ],
-        ),
+        // El total va ancho completo y no como una tarjeta mas de la fila.
+        // Cuando estaba entre tres tarjetas blancas iguales, el fondo azul se
+        // leia como "esta seleccionada" e invitaba a tocarla, pero no filtra
+        // nada. Asi queda claro que es el titular y no una opcion.
+        _TotalEnLaCalle(resumen: r),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -197,20 +181,104 @@ class _PanelScreenState extends State<PanelScreen> {
   }
 }
 
+/// El titular del panel: cuánta plata tiene el negocio en la calle.
+///
+/// Un solo número no se dibuja con un gráfico; se escribe grande. Lleva al
+/// lado las dos cifras que lo explican, para no repartirlas en tarjetas
+/// sueltas que compitan con él.
+class _TotalEnLaCalle extends StatelessWidget {
+  final ResumenNegocio resumen;
+
+  const _TotalEnLaCalle({required this.resumen});
+
+  @override
+  Widget build(BuildContext context) {
+    final deben = resumen.clientesConDeuda;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.azulProfundo, AppTheme.azulClaro],
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'En la calle',
+            style: TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              formatoCLP(resumen.totalFiado),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                height: 1.05,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _subCifra(
+                '$deben ${deben == 1 ? "cliente" : "clientes"}',
+                'con deuda',
+              ),
+              Container(
+                width: 1,
+                height: 28,
+                margin: const EdgeInsets.symmetric(horizontal: 18),
+                color: Colors.white24,
+              ),
+              _subCifra(formatoCLP(resumen.deudaPromedio), 'promedio c/u'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _subCifra(String valor, String etiqueta) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        valor,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      Text(
+        etiqueta,
+        style: const TextStyle(color: Colors.white70, fontSize: 11),
+      ),
+    ],
+  );
+}
+
 /// Una cifra con su etiqueta. No es un gráfico: cuando el dato es un solo
 /// número, un número grande se lee más rápido que cualquier dibujo.
 class _Indicador extends StatelessWidget {
   final String etiqueta;
   final String valor;
   final String detalle;
-  final bool destacado;
   final Color? color;
 
   const _Indicador({
     required this.etiqueta,
     required this.valor,
     required this.detalle,
-    this.destacado = false,
     this.color,
   });
 
@@ -219,11 +287,9 @@ class _Indicador extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: destacado ? AppTheme.azulProfundo : AppTheme.superficie,
+        color: AppTheme.superficie,
         borderRadius: BorderRadius.circular(14),
-        border: destacado
-            ? null
-            : Border.all(color: const Color(0xFFE8EAED)),
+        border: Border.all(color: const Color(0xFFE8EAED)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +299,7 @@ class _Indicador extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: destacado ? Colors.white70 : AppTheme.textoTenue,
+              color: AppTheme.textoTenue,
             ),
           ),
           const SizedBox(height: 6),
@@ -246,9 +312,7 @@ class _Indicador extends StatelessWidget {
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 height: 1.1,
-                color: destacado
-                    ? Colors.white
-                    : (color ?? AppTheme.azulProfundo),
+                color: color ?? AppTheme.azulProfundo,
               ),
             ),
           ),
@@ -257,7 +321,7 @@ class _Indicador extends StatelessWidget {
             detalle,
             style: TextStyle(
               fontSize: 11,
-              color: destacado ? Colors.white70 : AppTheme.textoTenue,
+              color: AppTheme.textoTenue,
             ),
           ),
         ],
