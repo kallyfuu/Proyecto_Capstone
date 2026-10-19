@@ -38,6 +38,7 @@ class RegistrarMovimientoSheet extends StatefulWidget {
 class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
   final _montoCtrl = TextEditingController();
   final _conceptoCtrl = TextEditingController();
+  final _boletaCtrl = TextEditingController();
 
   bool _esFiado = true;
   bool _guardando = false;
@@ -61,6 +62,7 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
   void dispose() {
     _montoCtrl.dispose();
     _conceptoCtrl.dispose();
+    _boletaCtrl.dispose();
     // Si cierran la hoja mientras el lector esperaba un llavero, hay que
     // cortar la sesion NFC o queda prendida gastando bateria.
     LectorNfc.cancelar();
@@ -107,6 +109,7 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
     try {
       final supabase = Supabase.instance.client;
       final negocioId = supabase.auth.currentUser!.id;
+      final boleta = _boletaCtrl.text.trim();
 
       // Pedimos que nos devuelva la fila insertada: si viene vacia, la base no
       // guardo nada y hay que enterarse aqui, no descubrirlo mirando la lista.
@@ -121,6 +124,7 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
         'concepto': _conceptoCtrl.text.trim().isEmpty
             ? (_esFiado ? 'Fiado' : 'Abono')
             : _conceptoCtrl.text.trim(),
+        'numero_boleta': boleta.isEmpty ? null : boleta,
         'es_offline': false,
         'fecha_local': DateTime.now().toUtc().toIso8601String(),
       }).select();
@@ -350,6 +354,15 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
               decoration: InputDecoration(
                 labelText: 'Concepto (opcional)',
                 hintText: _esFiado ? 'Pan, bebidas...' : 'Abono',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _boletaCtrl,
+              keyboardType: TextInputType.text,
+              decoration: const InputDecoration(
+                labelText: 'N° de boleta (opcional)',
+                hintText: 'Ej. 12345',
               ),
             ),
             if (_error != null) ...[
