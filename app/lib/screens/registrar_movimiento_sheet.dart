@@ -266,7 +266,10 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
           20,
           24 + MediaQuery.of(context).padding.bottom,
         ),
-        child: Column(
+        // Scrollable: con el teclado abierto la hoja no alcanza a caber
+        // y Flutter marcaba desbordamiento sobre el boton de guardar.
+        child: SingleChildScrollView(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -388,6 +391,7 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
             ),
           ],
         ),
+        ),
       ),
     );
   }
@@ -404,7 +408,7 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
             child: CircularProgressIndicator(strokeWidth: 2.5),
           ),
           SizedBox(width: 12),
-          Text('Verificando llavero...'),
+          Expanded(child: Text('Verificando llavero...')),
         ],
       );
     }
@@ -418,7 +422,9 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
             child: CircularProgressIndicator(strokeWidth: 2.5),
           ),
           SizedBox(width: 12),
-          Text('Acerca el llavero a la parte de atrás del teléfono...'),
+          Expanded(
+            child: Text('Acerca el llavero a la parte de atrás del teléfono...'),
+          ),
         ],
       );
     }
