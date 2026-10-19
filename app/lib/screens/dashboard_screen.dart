@@ -7,6 +7,7 @@ import '../utils/formato.dart';
 import '../utils/texto.dart';
 import 'leer_llavero_sheet.dart';
 import 'nuevo_cliente_sheet.dart';
+import 'panel_screen.dart';
 import 'registrar_movimiento_sheet.dart';
 
 /// Pantalla principal: quien me debe y cuanto.
@@ -124,6 +125,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: Text(_negocio),
         actions: [
+          IconButton(
+            tooltip: 'Panel del negocio',
+            icon: const Icon(Icons.insights_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PanelScreen()),
+            ),
+          ),
           IconButton(
             tooltip: 'Leer llavero',
             icon: const Icon(Icons.nfc),

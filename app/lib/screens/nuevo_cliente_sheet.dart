@@ -117,7 +117,10 @@ class _NuevoClienteSheetState extends State<NuevoClienteSheet> {
           20,
           24 + MediaQuery.of(context).padding.bottom,
         ),
-        child: Column(
+        // Scrollable: con el teclado abierto la hoja no alcanza a caber
+        // y Flutter marcaba desbordamiento sobre el boton de guardar.
+        child: SingleChildScrollView(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -205,6 +208,7 @@ class _NuevoClienteSheetState extends State<NuevoClienteSheet> {
                   : const Text('Guardar cliente'),
             ),
           ],
+        ),
         ),
       ),
     );
