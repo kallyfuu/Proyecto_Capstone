@@ -246,7 +246,9 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colorAccion = _esFiado ? AppTheme.moroso : AppTheme.cumplidor;
+    final colorAccion = _esFiado
+        ? AppTheme.morosoDe(context)
+        : AppTheme.cumplidorDe(context);
 
     return Padding(
       // Sube el contenido cuando aparece el teclado.
@@ -254,9 +256,9 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.superficie,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
         ),
         // Ver nota en nuevo_cliente_sheet.dart: el area segura evita que la
         // barra de navegacion del celular tape el boton.
@@ -278,7 +280,7 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDADCE0),
+                  color: AppTheme.tiradorDe(context),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -296,8 +298,8 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
               textoSaldo(widget.cliente.saldo),
               style: TextStyle(
                 color: widget.cliente.debe
-                    ? AppTheme.moroso
-                    : AppTheme.cumplidor,
+                    ? AppTheme.morosoDe(context)
+                    : AppTheme.cumplidorDe(context),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -354,7 +356,7 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
               const SizedBox(height: 14),
               Text(
                 _error!,
-                style: const TextStyle(color: AppTheme.moroso),
+                style: TextStyle(color: AppTheme.morosoDe(context)),
               ),
             ],
             const SizedBox(height: 20),
@@ -362,12 +364,12 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
               style: FilledButton.styleFrom(backgroundColor: colorAccion),
               onPressed: _guardando ? null : _guardar,
               child: _guardando
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 22,
                       width: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
-                        color: Colors.white,
+                        color: AppTheme.sobreAcentoDe(context),
                       ),
                     )
                   : Text(
@@ -439,7 +441,7 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
 
     return Row(
       children: [
-        const Icon(Icons.nfc, color: AppTheme.cumplidor),
+        Icon(Icons.nfc, color: AppTheme.cumplidorDe(context)),
         const SizedBox(width: 10),
         const Expanded(
           child: Text(

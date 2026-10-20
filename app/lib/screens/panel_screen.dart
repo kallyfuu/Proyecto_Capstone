@@ -95,7 +95,7 @@ class _PanelScreenState extends State<PanelScreen> {
           child: Text(
             'No se pudo cargar el panel:\n$_error',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppTheme.moroso),
+            style: TextStyle(color: AppTheme.morosoDe(context)),
           ),
         ),
       );
@@ -137,7 +137,7 @@ class _PanelScreenState extends State<PanelScreen> {
         fontSize: 11,
         fontWeight: FontWeight.w700,
         letterSpacing: 1.2,
-        color: AppTheme.textoTenue.withValues(alpha: 0.9),
+        color: AppTheme.textoTenueDe(context).withValues(alpha: 0.9),
       ),
     ),
   );
@@ -186,7 +186,7 @@ class _PanelScreenState extends State<PanelScreen> {
                     ? 'entró al negocio'
                     : 'recuperaste el $recuperado%',
                 color: recuperado != null && recuperado >= 100
-                    ? AppTheme.cumplidor
+                    ? AppTheme.cumplidorDe(context)
                     : null,
               ),
             ),
@@ -219,11 +219,13 @@ class _Indicador extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: destacado ? AppTheme.azulProfundo : AppTheme.superficie,
+        color: destacado
+            ? AppTheme.azulProfundo
+            : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         border: destacado
             ? null
-            : Border.all(color: const Color(0xFFE8EAED)),
+            : Border.all(color: AppTheme.bordeDe(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +235,7 @@ class _Indicador extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: destacado ? Colors.white70 : AppTheme.textoTenue,
+              color: destacado ? Colors.white70 : AppTheme.textoTenueDe(context),
             ),
           ),
           const SizedBox(height: 6),
@@ -248,7 +250,7 @@ class _Indicador extends StatelessWidget {
                 height: 1.1,
                 color: destacado
                     ? Colors.white
-                    : (color ?? AppTheme.azulProfundo),
+                    : (color ?? AppTheme.acentoDe(context)),
               ),
             ),
           ),
@@ -257,7 +259,7 @@ class _Indicador extends StatelessWidget {
             detalle,
             style: TextStyle(
               fontSize: 11,
-              color: destacado ? Colors.white70 : AppTheme.textoTenue,
+              color: destacado ? Colors.white70 : AppTheme.textoTenueDe(context),
             ),
           ),
         ],
@@ -289,24 +291,24 @@ class _GraficoMensual extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 16, 14, 12),
       decoration: BoxDecoration(
-        color: AppTheme.superficie,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE8EAED)),
+        border: Border.all(color: AppTheme.bordeDe(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              _puntoLeyenda(AppTheme.moroso, 'Fiado'),
+              _puntoLeyenda(context, AppTheme.morosoDe(context), 'Fiado'),
               const SizedBox(width: 16),
-              _puntoLeyenda(AppTheme.cumplidor, 'Abonos'),
+              _puntoLeyenda(context, AppTheme.cumplidorDe(context), 'Abonos'),
               const Spacer(),
               Text(
                 'Toca un mes',
                 style: TextStyle(
                   fontSize: 10,
-                  color: AppTheme.textoTenue.withValues(alpha: 0.8),
+                  color: AppTheme.textoTenueDe(context).withValues(alpha: 0.8),
                 ),
               ),
             ],
@@ -320,7 +322,7 @@ class _GraficoMensual extends StatelessWidget {
                       'Todavía no hay movimientos registrados',
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppTheme.textoTenue,
+                        color: AppTheme.textoTenueDe(context),
                       ),
                     ),
                   )
@@ -347,16 +349,18 @@ class _GraficoMensual extends StatelessWidget {
               children: [
                 Expanded(
                   child: _detalle(
+                    context,
                     'Fiado en ${elegido.etiqueta}',
                     formatoCLP(elegido.fiado),
-                    AppTheme.moroso,
+                    AppTheme.morosoDe(context),
                   ),
                 ),
                 Expanded(
                   child: _detalle(
+                    context,
                     'Abonos en ${elegido.etiqueta}',
                     formatoCLP(elegido.abonado),
-                    AppTheme.cumplidor,
+                    AppTheme.cumplidorDe(context),
                   ),
                 ),
               ],
@@ -367,7 +371,7 @@ class _GraficoMensual extends StatelessWidget {
     );
   }
 
-  Widget _puntoLeyenda(Color color, String texto) => Row(
+  Widget _puntoLeyenda(BuildContext context, Color color, String texto) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
       Container(
@@ -381,12 +385,17 @@ class _GraficoMensual extends StatelessWidget {
       const SizedBox(width: 6),
       Text(
         texto,
-        style: const TextStyle(fontSize: 12, color: AppTheme.textoTenue),
+        style: TextStyle(fontSize: 12, color: AppTheme.textoTenueDe(context)),
       ),
     ],
   );
 
-  Widget _detalle(String etiqueta, String valor, Color color) => Column(
+  Widget _detalle(
+    BuildContext context,
+    String etiqueta,
+    String valor,
+    Color color,
+  ) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Row(
@@ -399,7 +408,7 @@ class _GraficoMensual extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             etiqueta,
-            style: const TextStyle(fontSize: 11, color: AppTheme.textoTenue),
+            style: TextStyle(fontSize: 11, color: AppTheme.textoTenueDe(context)),
           ),
         ],
       ),
@@ -443,9 +452,9 @@ class _ColumnaMes extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _barra(altoFiado, AppTheme.moroso),
+                _barra(altoFiado, AppTheme.morosoDe(context)),
                 const SizedBox(width: 2),
-                _barra(altoAbono, AppTheme.cumplidor),
+                _barra(altoAbono, AppTheme.cumplidorDe(context)),
               ],
             ),
           ),
@@ -455,14 +464,16 @@ class _ColumnaMes extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: elegido ? FontWeight.bold : FontWeight.normal,
-              color: elegido ? AppTheme.azulProfundo : AppTheme.textoTenue,
+              color: elegido
+                  ? AppTheme.acentoDe(context)
+                  : AppTheme.textoTenueDe(context),
             ),
           ),
           const SizedBox(height: 3),
           Container(
             height: 2,
             width: 18,
-            color: elegido ? AppTheme.azulProfundo : Colors.transparent,
+            color: elegido ? AppTheme.acentoDe(context) : Colors.transparent,
           ),
         ],
       ),
@@ -496,18 +507,18 @@ class _BarraCartera extends StatelessWidget {
     final cuenta = resumen.porEstado;
     final total = cuenta.values.fold(0, (a, b) => a + b);
 
-    const estados = [
-      ('Cumplidor', AppTheme.cumplidor, Icons.check_circle),
-      ('Atrasado', AppTheme.atrasado, Icons.schedule),
-      ('Moroso', AppTheme.moroso, Icons.error),
+    final estados = [
+      ('Cumplidor', AppTheme.cumplidorDe(context), Icons.check_circle),
+      ('Atrasado', AppTheme.atrasadoDe(context), Icons.schedule),
+      ('Moroso', AppTheme.morosoDe(context), Icons.error),
     ];
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.superficie,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE8EAED)),
+        border: Border.all(color: AppTheme.bordeDe(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -515,7 +526,7 @@ class _BarraCartera extends StatelessWidget {
           if (total == 0)
             Text(
               'Todavía no hay clientes',
-              style: TextStyle(fontSize: 12, color: AppTheme.textoTenue),
+              style: TextStyle(fontSize: 12, color: AppTheme.textoTenueDe(context)),
             )
           else ...[
             ClipRRect(
@@ -584,9 +595,9 @@ class _TopDeudores extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 16, 14, 8),
       decoration: BoxDecoration(
-        color: AppTheme.superficie,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE8EAED)),
+        border: Border.all(color: AppTheme.bordeDe(context)),
       ),
       child: Column(
         children: [
@@ -625,7 +636,7 @@ class _TopDeudores extends StatelessWidget {
                           ? 0
                           : (c.saldo.abs() / mayor) * limites.maxWidth,
                       decoration: BoxDecoration(
-                        color: AppTheme.colorEstado(c.estadoRiesgo),
+                        color: AppTheme.colorEstadoDe(context, c.estadoRiesgo),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),

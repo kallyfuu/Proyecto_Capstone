@@ -26,6 +26,8 @@ class FiadoApp extends StatelessWidget {
       title: 'Fiado NFC',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
       home: const AuthGate(),
     );
   }

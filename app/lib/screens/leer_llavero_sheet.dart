@@ -256,9 +256,9 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.superficie,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
         ),
         padding: EdgeInsets.fromLTRB(
           20,
@@ -275,7 +275,7 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDADCE0),
+                  color: AppTheme.tiradorDe(context),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -291,16 +291,16 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
   Widget _construirContenido() {
     switch (_estado) {
       case _EstadoLectura.verificando:
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 36),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 36),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
               Text(
                 'Comprobando lector NFC...',
-                style: TextStyle(color: AppTheme.textoTenue),
+                style: TextStyle(color: AppTheme.textoTenueDe(context)),
               ),
             ],
           ),
@@ -313,7 +313,7 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
           detalle:
               'El lector de tu teléfono está apagado. Actívalo en la configuración para poder leer llaveros.',
           icono: Icons.nfc_outlined,
-          colorIcono: AppTheme.atrasado,
+          colorIcono: AppTheme.atrasadoDe(context),
           mostrarReintentar: true,
         );
 
@@ -324,7 +324,7 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
           detalle:
               'Este dispositivo no cuenta con tecnología NFC o no está disponible en este entorno.',
           icono: Icons.phonelink_erase,
-          colorIcono: AppTheme.moroso,
+          colorIcono: AppTheme.morosoDe(context),
           mostrarReintentar: false,
           permitirSimulacion: true,
         );
@@ -336,26 +336,26 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppTheme.azulProfundo.withValues(alpha: 0.08),
+                color: AppTheme.acentoDe(context).withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 76,
                     height: 76,
                     child: CircularProgressIndicator(
                       strokeWidth: 3,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        AppTheme.azulProfundo,
+                        AppTheme.acentoDe(context),
                       ),
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.nfc,
                     size: 44,
-                    color: AppTheme.azulProfundo,
+                    color: AppTheme.acentoDe(context),
                   ),
                 ],
               ),
@@ -371,10 +371,13 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Mantén el llavero cerca hasta que vibre o se reconozca.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textoTenue, fontSize: 13),
+              style: TextStyle(
+                color: AppTheme.textoTenueDe(context),
+                fontSize: 13,
+              ),
             ),
             const SizedBox(height: 24),
             OutlinedButton(
@@ -400,10 +403,10 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
                 const SizedBox(height: 6),
                 Text(
                   'UID: $_uidLeido',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'monospace',
                     fontSize: 12,
-                    color: AppTheme.textoTenue,
+                    color: AppTheme.textoTenueDe(context),
                   ),
                 ),
               ],
@@ -413,7 +416,7 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
 
       case _EstadoLectura.encontrado:
         final c = _clienteEncontrado!;
-        final color = AppTheme.colorEstado(c.estadoRiesgo);
+        final color = AppTheme.colorEstadoDe(context, c.estadoRiesgo);
         final inicial =
             c.nombre.trim().isEmpty ? '?' : c.nombre.trim()[0].toUpperCase();
 
@@ -473,7 +476,9 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: c.debe ? AppTheme.moroso : AppTheme.cumplidor,
+                    color: c.debe
+                        ? AppTheme.morosoDe(context)
+                        : AppTheme.cumplidorDe(context),
                   ),
                 ),
               ],
@@ -484,19 +489,23 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppTheme.fondo,
+                  color: AppTheme.fondoDe(context),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.nfc, size: 18, color: AppTheme.textoTenue),
+                    Icon(
+                      Icons.nfc,
+                      size: 18,
+                      color: AppTheme.textoTenueDe(context),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Llavero: $_uidLeido',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'monospace',
                         fontSize: 12,
-                        color: AppTheme.textoTenue,
+                        color: AppTheme.textoTenueDe(context),
                       ),
                     ),
                   ],
@@ -526,13 +535,13 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
               child: Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppTheme.atrasado.withValues(alpha: 0.12),
+                  color: AppTheme.atrasadoDe(context).withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.person_off_outlined,
                   size: 48,
-                  color: AppTheme.atrasado,
+                  color: AppTheme.atrasadoDe(context),
                 ),
               ),
             ),
@@ -549,7 +558,7 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppTheme.fondo,
+                    color: AppTheme.fondoDe(context),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -564,17 +573,20 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
               ),
               const SizedBox(height: 8),
             ],
-            const Text(
+            Text(
               'Puedes vincularlo ahora mismo para que identifique a una persona en sus próximas compras.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textoTenue, fontSize: 13),
+              style: TextStyle(
+                color: AppTheme.textoTenueDe(context),
+                fontSize: 13,
+              ),
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),
               Text(
                 _error!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.moroso, fontSize: 13),
+                style: TextStyle(color: AppTheme.morosoDe(context), fontSize: 13),
               ),
             ],
             const SizedBox(height: 22),
@@ -600,13 +612,13 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
               child: Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppTheme.moroso.withValues(alpha: 0.12),
+                  color: AppTheme.morosoDe(context).withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.error_outline,
                   size: 48,
-                  color: AppTheme.moroso,
+                  color: AppTheme.morosoDe(context),
                 ),
               ),
             ),
@@ -620,7 +632,10 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
             Text(
               _error ?? 'Error desconocido',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppTheme.textoTenue, fontSize: 13),
+              style: TextStyle(
+            color: AppTheme.textoTenueDe(context),
+            fontSize: 13,
+          ),
             ),
             const SizedBox(height: 22),
             FilledButton.icon(
@@ -671,7 +686,10 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
         Text(
           detalle,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: AppTheme.textoTenue, fontSize: 13),
+          style: TextStyle(
+            color: AppTheme.textoTenueDe(context),
+            fontSize: 13,
+          ),
         ),
         const SizedBox(height: 22),
         if (mostrarReintentar) ...[
@@ -749,9 +767,9 @@ class _SelectorClienteModalState extends State<_SelectorClienteModal> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
-      decoration: const BoxDecoration(
-        color: AppTheme.superficie,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
       ),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: Column(
@@ -762,7 +780,7 @@ class _SelectorClienteModalState extends State<_SelectorClienteModal> {
               width: 42,
               height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFFDADCE0),
+                color: AppTheme.tiradorDe(context),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -773,9 +791,12 @@ class _SelectorClienteModalState extends State<_SelectorClienteModal> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Elige a quién pertenece este llavero',
-            style: TextStyle(color: AppTheme.textoTenue, fontSize: 13),
+            style: TextStyle(
+              color: AppTheme.textoTenueDe(context),
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -803,7 +824,7 @@ class _SelectorClienteModalState extends State<_SelectorClienteModal> {
       return Center(
         child: Text(
           'Error al cargar clientes: $_error',
-          style: const TextStyle(color: AppTheme.moroso),
+          style: TextStyle(color: AppTheme.morosoDe(context)),
         ),
       );
     }
@@ -814,10 +835,10 @@ class _SelectorClienteModalState extends State<_SelectorClienteModal> {
     }).toList();
 
     if (filtrados.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No se encontraron clientes',
-          style: TextStyle(color: AppTheme.textoTenue),
+          style: TextStyle(color: AppTheme.textoTenueDe(context)),
         ),
       );
     }
@@ -826,7 +847,7 @@ class _SelectorClienteModalState extends State<_SelectorClienteModal> {
       itemCount: filtrados.length,
       itemBuilder: (context, index) {
         final cliente = filtrados[index];
-        final color = AppTheme.colorEstado(cliente.estadoRiesgo);
+        final color = AppTheme.colorEstadoDe(context, cliente.estadoRiesgo);
         final inicial = cliente.nombre.trim().isEmpty
             ? '?'
             : cliente.nombre.trim()[0].toUpperCase();
@@ -848,7 +869,9 @@ class _SelectorClienteModalState extends State<_SelectorClienteModal> {
           subtitle: Text(
             textoSaldo(cliente.saldo),
             style: TextStyle(
-              color: cliente.debe ? AppTheme.moroso : AppTheme.cumplidor,
+              color: cliente.debe
+                  ? AppTheme.morosoDe(context)
+                  : AppTheme.cumplidorDe(context),
               fontSize: 12,
             ),
           ),

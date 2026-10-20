@@ -104,9 +104,9 @@ class _NuevoClienteSheetState extends State<NuevoClienteSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.superficie,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
         ),
         // Al 24 de abajo le sumamos el area segura: si no, la barra de
         // navegacion del celular se come el boton cuando el teclado esta bajo.
@@ -129,7 +129,7 @@ class _NuevoClienteSheetState extends State<NuevoClienteSheet> {
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDADCE0),
+                  color: AppTheme.tiradorDe(context),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -140,9 +140,9 @@ class _NuevoClienteSheetState extends State<NuevoClienteSheet> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 2),
-            const Text(
+            Text(
               'Solo el nombre es obligatorio',
-              style: TextStyle(color: AppTheme.textoTenue),
+              style: TextStyle(color: AppTheme.textoTenueDe(context)),
             ),
             const SizedBox(height: 20),
             TextField(
@@ -180,9 +180,9 @@ class _NuevoClienteSheetState extends State<NuevoClienteSheet> {
               const SizedBox(height: 8),
               Text(
                 'Hasta ${formatoCLP(_limite)} de fiado',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.textoTenue,
+                  color: AppTheme.textoTenueDe(context),
                 ),
               ),
             ],
@@ -190,19 +190,19 @@ class _NuevoClienteSheetState extends State<NuevoClienteSheet> {
               const SizedBox(height: 14),
               Text(
                 _error!,
-                style: const TextStyle(color: AppTheme.moroso),
+                style: TextStyle(color: AppTheme.morosoDe(context)),
               ),
             ],
             const SizedBox(height: 20),
             FilledButton(
               onPressed: _guardando ? null : _guardar,
               child: _guardando
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 22,
                       width: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
-                        color: Colors.white,
+                        color: AppTheme.sobreAcentoDe(context),
                       ),
                     )
                   : const Text('Guardar cliente'),
