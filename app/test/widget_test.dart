@@ -1,8 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:fiado_nfc/screens/historial_movimientos_screen.dart';
+import 'package:fiado_nfc/services/lector_nfc.dart';
 import 'package:fiado_nfc/theme/app_theme.dart';
 import 'package:fiado_nfc/utils/formato.dart';
-import 'package:fiado_nfc/services/lector_nfc.dart';
 import 'package:fiado_nfc/utils/texto.dart';
 
 void main() {
@@ -76,6 +77,52 @@ void main() {
     test('LectorNfc tiene un UID de prueba para desarrollo', () {
       expect(LectorNfc.uidDePrueba.isNotEmpty, isTrue);
       expect(LectorNfc.uidDePrueba.split(':').length, greaterThanOrEqualTo(4));
+    });
+  });
+
+  group('Boleta en movimientos e historial', () {
+    test('Movimiento toma el numero de boleta si viene en el mapa', () {
+      final mov = Movimiento.desdeMapa({
+        'concepto': 'Pan y cecina',
+        'monto': -3500,
+        'fecha_local': '2026-10-19T20:00:00Z',
+        'numero_boleta': '12345',
+      });
+      expect(mov.numeroBoleta, '12345');
+      expect(mov.concepto, 'Pan y cecina');
+      expect(mov.esFiado, isTrue);
+    });
+
+    test('Movimiento deja numeroBoleta en null si viene vacio o nulo', () {
+      final movNulo = Movimiento.desdeMapa({
+        'concepto': 'Bebida',
+        'monto': -1500,
+        'fecha_local': '2026-10-19T20:00:00Z',
+        'numero_boleta': null,
+      });
+      expect(movNulo.numeroBoleta, isNull);
+
+      final movVacio = Movimiento.desdeMapa({
+        'concepto': 'Bebida',
+        'monto': -1500,
+        'fecha_local': '2026-10-19T20:00:00Z',
+        'numero_boleta': '   ',
+      });
+      expect(movVacio.numeroBoleta, isNull);
+
+      final movSinColumna = Movimiento.desdeMapa({
+        'concepto': 'Bebida',
+        'monto': -1500,
+        'fecha_local': '2026-10-19T20:00:00Z',
+      });
+      expect(movSinColumna.numeroBoleta, isNull);
+    });
+
+    test('Formato de boleta antepone Boleta N° cuando corresponde', () {
+      expect(HistorialMovimientosScreen.formatoBoleta('12345'), 'Boleta N° 12345');
+      expect(HistorialMovimientosScreen.formatoBoleta('N° 999'), 'Boleta N° 999');
+      expect(HistorialMovimientosScreen.formatoBoleta('#888'), 'Boleta #888');
+      expect(HistorialMovimientosScreen.formatoBoleta('Boleta 777'), 'Boleta 777');
     });
   });
 }

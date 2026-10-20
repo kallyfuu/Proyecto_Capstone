@@ -10,24 +10,28 @@ import '../utils/formato.dart';
 /// No es un modelo compartido como `ClienteSaldo` porque, por ahora, solo lo
 /// usa esta pantalla. Si otra pantalla necesita transacciones más adelante,
 /// esto se puede mover a `models/`.
-class _Movimiento {
+class Movimiento {
   final String concepto;
   final int monto;
   final DateTime fecha;
+  final String? numeroBoleta;
 
-  const _Movimiento({
+  const Movimiento({
     required this.concepto,
     required this.monto,
     required this.fecha,
+    this.numeroBoleta,
   });
 
-  factory _Movimiento.desdeMapa(Map<String, dynamic> mapa) {
-    return _Movimiento(
+  factory Movimiento.desdeMapa(Map<String, dynamic> mapa) {
+    final boletaRaw = mapa['numero_boleta']?.toString().trim();
+    return Movimiento(
       concepto: (mapa['concepto'] ?? '').toString(),
       monto: (mapa['monto'] as num).toInt(),
       // fecha_local se guarda en UTC (ver registrar_movimiento_sheet.dart);
       // toLocal() la pasa a la hora del dispositivo para mostrarla.
       fecha: DateTime.parse(mapa['fecha_local'] as String).toLocal(),
+      numeroBoleta: (boletaRaw == null || boletaRaw.isEmpty) ? null : boletaRaw,
     );
   }
 
@@ -44,6 +48,18 @@ class HistorialMovimientosScreen extends StatefulWidget {
 
   const HistorialMovimientosScreen({super.key, required this.cliente});
 
+  /// Formatea el número de boleta para mostrarlo debajo del concepto.
+  static String formatoBoleta(String numero) {
+    final limpia = numero.trim();
+    if (limpia.toLowerCase().startsWith('boleta')) {
+      return limpia;
+    }
+    if (limpia.startsWith('N°') || limpia.startsWith('n°') || limpia.startsWith('#')) {
+      return 'Boleta $limpia';
+    }
+    return 'Boleta N° $limpia';
+  }
+
   @override
   State<HistorialMovimientosScreen> createState() =>
       _HistorialMovimientosScreenState();
@@ -53,7 +69,7 @@ class _HistorialMovimientosScreenState
     extends State<HistorialMovimientosScreen> {
   final _supabase = Supabase.instance.client;
 
-  List<_Movimiento> _movimientos = const [];
+  List<Movimiento> _movimientos = const [];
   bool _cargando = true;
   String? _error;
 
@@ -81,7 +97,7 @@ class _HistorialMovimientosScreenState
       if (!mounted) return;
 
       setState(() {
-        _movimientos = filas.map(_Movimiento.desdeMapa).toList();
+        _movimientos = filas.map(Movimiento.desdeMapa).toList();
         _cargando = false;
       });
     } catch (e) {
@@ -137,7 +153,7 @@ class _HistorialMovimientosScreenState
     );
   }
 
-  Widget _filaMovimiento(_Movimiento mov) {
+  Widget _filaMovimiento(Movimiento mov) {
     final color =
         mov.esFiado ? AppTheme.morosoDe(context) : AppTheme.cumplidorDe(context);
 
@@ -164,6 +180,16 @@ class _HistorialMovimientosScreenState
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  if (mov.numeroBoleta != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      HistorialMovimientosScreen.formatoBoleta(mov.numeroBoleta!),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textoTenueDe(context),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 3),
                   Text(
                     _formatoFecha(mov.fecha),
