@@ -5,6 +5,7 @@ import 'config/supabase_config.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'theme/app_theme.dart';
+import 'theme/modo_tema.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +15,9 @@ Future<void> main() async {
     publishableKey: SupabaseConfig.anonKey,
   );
 
+  // Recupera el modo de tema que el usuario eligio la ultima vez.
+  await ModoTema.cargar();
+
   runApp(const FiadoApp());
 }
 
@@ -22,13 +26,18 @@ class FiadoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Fiado NFC',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
-      home: const AuthGate(),
+    // Se redibuja solo cuando el usuario cambia el modo desde el boton del
+    // dashboard. Por defecto sigue al sistema (ThemeMode.system).
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ModoTema.modo,
+      builder: (context, modo, _) => MaterialApp(
+        title: 'Fiado NFC',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: modo,
+        home: const AuthGate(),
+      ),
     );
   }
 }

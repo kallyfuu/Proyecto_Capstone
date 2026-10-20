@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/cliente_saldo.dart';
 import '../theme/app_theme.dart';
+import '../theme/modo_tema.dart';
 import '../utils/formato.dart';
 import '../utils/texto.dart';
 import 'leer_llavero_sheet.dart';
@@ -136,6 +137,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
             tooltip: 'Leer llavero',
             icon: const Icon(Icons.nfc),
             onPressed: _leerLlavero,
+          ),
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: ModoTema.modo,
+            builder: (context, modo, _) => PopupMenuButton<ThemeMode>(
+              tooltip: 'Tema de la app',
+              icon: Icon(switch (modo) {
+                ThemeMode.light => Icons.light_mode_outlined,
+                ThemeMode.dark => Icons.dark_mode_outlined,
+                ThemeMode.system => Icons.brightness_auto_outlined,
+              }),
+              initialValue: modo,
+              onSelected: ModoTema.elegir,
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: ThemeMode.system,
+                  child: Text('Automático (sistema)'),
+                ),
+                PopupMenuItem(value: ThemeMode.light, child: Text('Claro')),
+                PopupMenuItem(value: ThemeMode.dark, child: Text('Oscuro')),
+              ],
+            ),
           ),
           IconButton(
             tooltip: 'Cerrar sesión',
