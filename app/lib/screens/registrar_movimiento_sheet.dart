@@ -48,6 +48,7 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
   // Para no asumirlo, se consulta aparte directo a la tabla `clientes`,
   // que es donde de verdad vive esa columna.
   String? _nfcUid;
+  int? _limiteCredito;
   bool _cargandoLlavero = true;
   bool _leyendoLlavero = false;
 
@@ -76,13 +77,14 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
       final supabase = Supabase.instance.client;
       final fila = await supabase
           .from('clientes')
-          .select('nfc_uid')
+          .select('nfc_uid, limite_credito')
           .eq('id', widget.cliente.id)
           .maybeSingle();
 
       if (!mounted) return;
       setState(() {
         _nfcUid = fila?['nfc_uid']?.toString();
+        _limiteCredito = (fila?['limite_credito'] as num?)?.toInt();
         _cargandoLlavero = false;
       });
     } catch (_) {
@@ -303,6 +305,8 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
                 fontWeight: FontWeight.w600,
               ),
             ),
+            const SizedBox(height: 14),
+            _seccionLimiteCredito(),
             const SizedBox(height: 16),
             _seccionLlavero(),
             const SizedBox(height: 18),
@@ -395,6 +399,116 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
         ),
         ),
       ),
+    );
+  }
+
+  /// Cuanto debe hoy el cliente.
+  int get _deudaActual =>
+      widget.cliente.saldo < 0 ? widget.cliente.saldo.abs() : 0;
+
+  /// En cuanto quedaria la deuda si se registra este fiado.
+  int get _deudaProyectada => _esFiado ? _deudaActual + _monto : _deudaActual;
+
+  /// Cuanto se pasa del limite, o cero si no se pasa.
+  int get _excedente {
+    final limite = _limiteCredito ?? 0;
+    if (limite <= 0) return 0;
+    final exceso = _deudaProyectada - limite;
+    return exceso > 0 ? exceso : 0;
+  }
+
+  /// Limite de credito del cliente y cuanto le queda disponible.
+  ///
+  /// Avisa cuando el fiado se pasa del limite, pero NO lo bloquea. El limite
+  /// es una referencia que el propio vendedor fijo, y en un negocio de barrio
+  /// el que decide si le fia igual a un cliente de años es el vendedor, no el
+  /// sistema. Lo que no puede pasar es que se entere despues.
+  Widget _seccionLimiteCredito() {
+    final limite = _limiteCredito ?? 0;
+    if (limite <= 0) return const SizedBox.shrink();
+
+    final disponible = limite - _deudaActual;
+    final usado = (_deudaProyectada / limite).clamp(0.0, 1.0);
+    final seExcede = _excedente > 0;
+
+    final color = seExcede
+        ? AppTheme.morosoDe(context)
+        : (usado > 0.8
+              ? AppTheme.atrasadoDe(context)
+              : AppTheme.cumplidorDe(context));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.speed_outlined, size: 15, color: color),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                'Límite ${formatoCLP(limite)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textoTenueDe(context),
+                ),
+              ),
+            ),
+            Text(
+              disponible > 0
+                  ? 'Disponible ${formatoCLP(disponible)}'
+                  : 'Sin cupo',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: disponible > 0
+                    ? AppTheme.textoTenueDe(context)
+                    : AppTheme.morosoDe(context),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: usado,
+            minHeight: 6,
+            backgroundColor: AppTheme.bordeDe(context),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+        if (seExcede) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.morosoDe(context).withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: 18,
+                  color: AppTheme.morosoDe(context),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Con este fiado se pasa ${formatoCLP(_excedente)} '
+                    'de su límite.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.morosoDe(context),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 
