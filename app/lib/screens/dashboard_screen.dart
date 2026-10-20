@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/cliente_saldo.dart';
 import '../theme/app_theme.dart';
+import '../theme/modo_tema.dart';
 import '../utils/formato.dart';
 import '../utils/texto.dart';
 import 'leer_llavero_sheet.dart';
@@ -137,6 +138,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: const Icon(Icons.nfc),
             onPressed: _leerLlavero,
           ),
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: ModoTema.modo,
+            builder: (context, modo, _) => PopupMenuButton<ThemeMode>(
+              tooltip: 'Tema de la app',
+              icon: Icon(switch (modo) {
+                ThemeMode.light => Icons.light_mode_outlined,
+                ThemeMode.dark => Icons.dark_mode_outlined,
+                ThemeMode.system => Icons.brightness_auto_outlined,
+              }),
+              initialValue: modo,
+              onSelected: ModoTema.elegir,
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: ThemeMode.system,
+                  child: Text('Automático (sistema)'),
+                ),
+                PopupMenuItem(value: ThemeMode.light, child: Text('Claro')),
+                PopupMenuItem(value: ThemeMode.dark, child: Text('Oscuro')),
+              ],
+            ),
+          ),
           IconButton(
             tooltip: 'Cerrar sesión',
             icon: const Icon(Icons.logout),
@@ -155,8 +177,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _nuevoCliente,
-        backgroundColor: AppTheme.azulProfundo,
-        foregroundColor: Colors.white,
+        backgroundColor: AppTheme.acentoDe(context),
+        foregroundColor: AppTheme.sobreAcentoDe(context),
         icon: const Icon(Icons.person_add_alt),
         label: const Text('Nuevo cliente'),
       ),
@@ -171,7 +193,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (_error != null) {
       return _mensajeCentrado(
         icono: Icons.cloud_off,
-        color: AppTheme.moroso,
+        color: AppTheme.morosoDe(context),
         titulo: 'No se pudo cargar',
         detalle: _error!,
       );
@@ -180,7 +202,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (_clientes.isEmpty) {
       return _mensajeCentrado(
         icono: Icons.people_outline,
-        color: AppTheme.textoTenue,
+        color: AppTheme.textoTenueDe(context),
         titulo: 'Todavía no hay clientes',
         detalle: 'Agrega el primero y podrás empezar a registrarle fiados.',
         accion: FilledButton.icon(
@@ -235,7 +257,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.1,
-                  color: AppTheme.textoTenue.withValues(alpha: 0.9),
+                  color: AppTheme.textoTenueDe(context).withValues(alpha: 0.9),
                 ),
               ),
             ),
@@ -263,7 +285,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Center(
         child: Text(
           'No hay clientes con ese nombre',
-          style: const TextStyle(color: AppTheme.textoTenue),
+          style: TextStyle(color: AppTheme.textoTenueDe(context)),
         ),
       ),
     );
@@ -314,7 +336,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _filaCliente(ClienteSaldo cliente) {
-    final color = AppTheme.colorEstado(cliente.estadoRiesgo);
+    final color = AppTheme.colorEstadoDe(context, cliente.estadoRiesgo);
     final inicial = cliente.nombre.trim().isEmpty
         ? '?'
         : cliente.nombre.trim()[0].toUpperCase();
@@ -378,7 +400,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: cliente.debe ? AppTheme.moroso : AppTheme.cumplidor,
+                  color: cliente.debe
+                      ? AppTheme.morosoDe(context)
+                      : AppTheme.cumplidorDe(context),
                 ),
               ),
             ],
@@ -411,7 +435,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Text(
               detalle,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppTheme.textoTenue),
+              style: TextStyle(color: AppTheme.textoTenueDe(context)),
             ),
             if (accion != null) ...[
               const SizedBox(height: 24),

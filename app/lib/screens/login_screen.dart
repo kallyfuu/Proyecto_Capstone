@@ -89,26 +89,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.storefront,
                       size: 64,
-                      color: AppTheme.azulProfundo,
+                      color: AppTheme.acentoDe(context),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Fiado NFC',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.azulProfundo,
+                        color: AppTheme.acentoDe(context),
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'El cuaderno de fiados, en tu celular',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppTheme.textoTenue),
+                      style: TextStyle(color: AppTheme.textoTenueDe(context)),
                     ),
                     const SizedBox(height: 36),
                     TextFormField(
@@ -149,21 +149,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppTheme.moroso.withValues(alpha: 0.08),
+                          color: AppTheme.morosoDe(context).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.error_outline,
-                              color: AppTheme.moroso,
+                              color: AppTheme.morosoDe(context),
                               size: 20,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 _error!,
-                                style: const TextStyle(color: AppTheme.moroso),
+                                style: TextStyle(color: AppTheme.morosoDe(context)),
                               ),
                             ),
                           ],
@@ -174,12 +174,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     FilledButton(
                       onPressed: _cargando ? null : _enviar,
                       child: _cargando
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 22,
                               width: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                color: Colors.white,
+                                color: AppTheme.sobreAcentoDe(context),
                               ),
                             )
                           : Text(

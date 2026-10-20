@@ -111,7 +111,7 @@ class _HistorialMovimientosScreenState
     if (_error != null) {
       return _mensajeCentrado(
         icono: Icons.cloud_off,
-        color: AppTheme.moroso,
+        color: AppTheme.morosoDe(context),
         titulo: 'No se pudo cargar',
         detalle: _error!,
       );
@@ -120,7 +120,7 @@ class _HistorialMovimientosScreenState
     if (_movimientos.isEmpty) {
       return _mensajeCentrado(
         icono: Icons.receipt_long_outlined,
-        color: AppTheme.textoTenue,
+        color: AppTheme.textoTenueDe(context),
         titulo: 'Todavía no hay movimientos',
         detalle: 'Cuando registres un fiado o abono, aparecerá acá.',
       );
@@ -138,7 +138,8 @@ class _HistorialMovimientosScreenState
   }
 
   Widget _filaMovimiento(_Movimiento mov) {
-    final color = mov.esFiado ? AppTheme.moroso : AppTheme.cumplidor;
+    final color =
+        mov.esFiado ? AppTheme.morosoDe(context) : AppTheme.cumplidorDe(context);
 
     return Card(
       margin: EdgeInsets.zero,
@@ -166,9 +167,9 @@ class _HistorialMovimientosScreenState
                   const SizedBox(height: 3),
                   Text(
                     _formatoFecha(mov.fecha),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppTheme.textoTenue,
+                      color: AppTheme.textoTenueDe(context),
                     ),
                   ),
                 ],
@@ -210,7 +211,7 @@ class _HistorialMovimientosScreenState
             Text(
               detalle,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppTheme.textoTenue),
+              style: TextStyle(color: AppTheme.textoTenueDe(context)),
             ),
           ],
         ),
