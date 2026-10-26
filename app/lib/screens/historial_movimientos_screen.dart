@@ -54,7 +54,9 @@ class HistorialMovimientosScreen extends StatefulWidget {
     if (limpia.toLowerCase().startsWith('boleta')) {
       return limpia;
     }
-    if (limpia.startsWith('N°') || limpia.startsWith('n°') || limpia.startsWith('#')) {
+    if (limpia.startsWith('N°') ||
+        limpia.startsWith('n°') ||
+        limpia.startsWith('#')) {
       return 'Boleta $limpia';
     }
     return 'Boleta N° $limpia';
@@ -112,9 +114,7 @@ class _HistorialMovimientosScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.cliente.nombre),
-      ),
+      appBar: AppBar(title: Text(widget.cliente.nombre)),
       body: _cuerpo(),
     );
   }
@@ -154,8 +154,9 @@ class _HistorialMovimientosScreenState
   }
 
   Widget _filaMovimiento(Movimiento mov) {
-    final color =
-        mov.esFiado ? AppTheme.morosoDe(context) : AppTheme.cumplidorDe(context);
+    final color = mov.esFiado
+        ? AppTheme.morosoDe(context)
+        : AppTheme.cumplidorDe(context);
 
     return Card(
       margin: EdgeInsets.zero,
@@ -183,7 +184,9 @@ class _HistorialMovimientosScreenState
                   if (mov.numeroBoleta != null) ...[
                     const SizedBox(height: 2),
                     Text(
-                      HistorialMovimientosScreen.formatoBoleta(mov.numeroBoleta!),
+                      HistorialMovimientosScreen.formatoBoleta(
+                        mov.numeroBoleta!,
+                      ),
                       style: TextStyle(
                         fontSize: 12,
                         color: AppTheme.textoTenueDe(context),
