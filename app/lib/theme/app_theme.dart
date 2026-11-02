@@ -17,7 +17,7 @@ class AppTheme {
   static const LinearGradient degradadoMarca = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF4338CA), Color(0xFF6366F1)],
+    colors: [Color(0xFF00D084), Color(0xFF059669)],
   );
 
   /// Degradado de acento para el modo oscuro.
@@ -43,14 +43,16 @@ class AppTheme {
     ),
   ];
 
-  // Marca
-  static const Color azulProfundo = Color(0xFF4F46E5);
-  static const Color azulClaro = Color(0xFF6366F1);
+  // Marca. En claro el acento es un menta mas brillante que el del semaforo,
+  // y en oscuro pasa lo mismo: asi un boton y un cliente "al dia" no terminan
+  // pintados del mismo color exacto.
+  static const Color azulProfundo = Color(0xFF059669);
+  static const Color azulClaro = Color(0xFF00D084);
 
   // Semaforo de riesgo (tema claro): significan estado, nunca decoracion.
-  static const Color cumplidor = Color(0xFF10B981);
-  static const Color atrasado = Color(0xFFF29900);
-  static const Color moroso = Color(0xFFF43F5E);
+  static const Color cumplidor = Color(0xFF059669);
+  static const Color atrasado = Color(0xFFF59E0B);
+  static const Color moroso = Color(0xFFE11D48);
 
   // Semaforo de riesgo (tema oscuro): versiones aclaradas para que no
   // queden apagadas sobre fondo negro. Los iconos y textos del panel se
@@ -60,9 +62,12 @@ class AppTheme {
   static const Color morosoOscuro = Color(0xFFEF4444);
 
   // Neutros (tema claro)
-  static const Color fondo = Color(0xFFF8F9FD);
+  static const Color fondo = Color(0xFFF8FAFC);
   static const Color superficie = Colors.white;
-  static const Color textoTenue = Color(0xFF5F6368);
+  static const Color textoTenue = Color(0xFF64748B);
+
+  /// Texto principal en el tema claro.
+  static const Color titanio = Color(0xFF0F172A);
   static const Color bordeClaro = Color(0xFFE8EAED);
 
   // Neutros (tema oscuro)
@@ -144,8 +149,12 @@ class AppTheme {
       _esOscuro(context) ? azulSobreOscuro : azulProfundo;
 
   /// Color del texto o icono que va encima de [acentoDe].
+  ///
+  /// Oscuro en los dos temas, porque el acento es menta en los dos. Blanco
+  /// sobre el menta brillante del degradado da 1,9 a 1 y no se lee; titanio
+  /// sobre ese mismo menta pasa de 9 a 1.
   static Color sobreAcentoDe(BuildContext context) =>
-      _esOscuro(context) ? textoSobreAzulOscuro : Colors.white;
+      _esOscuro(context) ? textoSobreAzulOscuro : titanio;
 
   static Color tiradorDe(BuildContext context) =>
       _esOscuro(context) ? tiradorOscuro : tiradorClaro;
@@ -155,6 +164,7 @@ class AppTheme {
       seedColor: azulProfundo,
       primary: azulProfundo,
       surface: superficie,
+      onSurface: titanio,
     );
 
     return ThemeData(
