@@ -9,7 +9,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ModoTema {
   static const _clave = 'modo_tema';
 
-  static final ValueNotifier<ThemeMode> modo = ValueNotifier(ThemeMode.system);
+  /// La app abre en oscuro.
+  ///
+  /// La identidad visual del producto es oscura, asi que seguir al sistema
+  /// significaba que la mitad de la gente abriera una version que no es la
+  /// que pensamos. El selector de tema sigue funcionando: quien prefiera el
+  /// claro lo elige y queda guardado.
+  static final ValueNotifier<ThemeMode> modo = ValueNotifier(ThemeMode.dark);
 
   /// Lee la eleccion guardada. Se llama una vez al abrir la app.
   /// Si falla o no hay nada guardado, se queda en "seguir al sistema".
@@ -19,10 +25,10 @@ class ModoTema {
       modo.value = switch (prefs.getString(_clave)) {
         'light' => ThemeMode.light,
         'dark' => ThemeMode.dark,
-        _ => ThemeMode.system,
+        _ => ThemeMode.dark,
       };
     } catch (_) {
-      // Sin preferencia guardada: se mantiene ThemeMode.system.
+      // Sin preferencia guardada: se mantiene ThemeMode.dark.
     }
   }
 

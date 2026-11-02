@@ -20,6 +20,19 @@ class AppTheme {
     colors: [Color(0xFF4338CA), Color(0xFF6366F1)],
   );
 
+  /// Degradado de acento para el modo oscuro.
+  static const LinearGradient degradadoMenta = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF00F59B), Color(0xFF10B981)],
+  );
+
+  /// El degradado que corresponde al tema activo.
+  static LinearGradient degradadoDe(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? degradadoMenta
+      : degradadoMarca;
+
   /// Sombra de tarjeta: apenas perceptible. Una sombra negra pesada envejece
   /// la interfaz y ademas cuesta mas de dibujar en gama media.
   static List<BoxShadow> get sombraSuave => [
@@ -42,9 +55,9 @@ class AppTheme {
   // Semaforo de riesgo (tema oscuro): versiones aclaradas para que no
   // queden apagadas sobre fondo negro. Los iconos y textos del panel se
   // mantienen, porque compensan la limitacion para daltonismo.
-  static const Color cumplidorOscuro = Color(0xFF2FA45C);
-  static const Color atrasadoOscuro = Color(0xFFE0A020);
-  static const Color morosoOscuro = Color(0xFFE85D52);
+  static const Color cumplidorOscuro = Color(0xFF10B981);
+  static const Color atrasadoOscuro = Color(0xFFF59E0B);
+  static const Color morosoOscuro = Color(0xFFEF4444);
 
   // Neutros (tema claro)
   static const Color fondo = Color(0xFFF8F9FD);
@@ -53,14 +66,21 @@ class AppTheme {
   static const Color bordeClaro = Color(0xFFE8EAED);
 
   // Neutros (tema oscuro)
-  static const Color fondoOscuro = Color(0xFF121417);
-  static const Color superficieOscura = Color(0xFF1C1F24);
-  static const Color textoTenueOscuro = Color(0xFF9AA0A6);
-  static const Color bordeOscuro = Color(0xFF3C4043);
+  static const Color fondoOscuro = Color(0xFF0F1218);
+  /// Titanio: las tarjetas se separan del fondo por su color, no por una
+  /// sombra. En oscuro una sombra no se ve, asi que la jerarquia la tiene que
+  /// dar el contraste entre superficies.
+  static const Color superficieOscura = Color(0xFF181E29);
+
+  /// Fondo de los campos de texto en oscuro: un paso mas hundido que la
+  /// tarjeta, para que se lea que son huecos donde se escribe.
+  static const Color campoOscuro = Color(0xFF121620);
+  static const Color textoTenueOscuro = Color(0xFF94A3B8);
+  static const Color bordeOscuro = Color(0xFF263042);
 
   // Azul de acento para botones y enfoques sobre fondo oscuro.
-  static const Color azulSobreOscuro = Color(0xFF8AB4F8);
-  static const Color textoSobreAzulOscuro = Color(0xFF0B1B36);
+  static const Color azulSobreOscuro = Color(0xFF10B981);
+  static const Color textoSobreAzulOscuro = Color(0xFF04140E);
 
   // Manija (la rayita) de las hojas inferiores.
   static const Color tiradorClaro = Color(0xFFDADCE0);
@@ -213,7 +233,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: superficieOscura,
+        fillColor: campoOscuro,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         border: OutlineInputBorder(

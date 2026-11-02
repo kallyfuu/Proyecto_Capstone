@@ -10,6 +10,7 @@ class ClienteSaldo {
   final String? telefono;
   final String? estadoRiesgo;
   final int? limiteCredito;
+  final String? tokenPortal;
 
   const ClienteSaldo({
     required this.id,
@@ -18,6 +19,7 @@ class ClienteSaldo {
     this.telefono,
     this.estadoRiesgo,
     this.limiteCredito,
+    this.tokenPortal,
   });
 
   /// Lee los campos con tolerancia: si la vista todavia no expone alguna
@@ -30,6 +32,7 @@ class ClienteSaldo {
       telefono: fila['telefono']?.toString(),
       estadoRiesgo: fila['estado_riesgo']?.toString(),
       limiteCredito: (fila['limite_credito'] as num?)?.toInt(),
+      tokenPortal: fila['token_portal']?.toString(),
     );
   }
 

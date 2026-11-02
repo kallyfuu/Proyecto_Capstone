@@ -137,9 +137,11 @@ class _LoginScreenState extends State<LoginScreen> {
       // Un tercio de la pantalla, con topes para que no se coma el formulario
       // en telefonos bajos ni quede una franja perdida en los altos.
       height: (alto * 0.33).clamp(220.0, 300.0),
-      decoration: const BoxDecoration(
-        gradient: AppTheme.degradadoMarca,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+      decoration: BoxDecoration(
+        gradient: AppTheme.degradadoDe(context),
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(32),
+        ),
       ),
       child: SafeArea(
         bottom: false,
@@ -159,20 +161,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.nfc_rounded,
                 size: 38,
-                color: Colors.white,
+                color: AppTheme.sobreAcentoDe(context),
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Fiado Inteligente',
               style: TextStyle(
                 fontSize: 27,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.6,
-                color: Colors.white,
+                color: AppTheme.sobreAcentoDe(context),
               ),
             ),
             const SizedBox(height: 4),
@@ -180,7 +182,9 @@ class _LoginScreenState extends State<LoginScreen> {
               'Gestión de fiado con NFC',
               style: TextStyle(
                 fontSize: 13.5,
-                color: Colors.white.withValues(alpha: 0.85),
+                color: AppTheme.sobreAcentoDe(
+                  context,
+                ).withValues(alpha: 0.82),
               ),
             ),
           ],
@@ -270,7 +274,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // de pantalla, para que el salto no se sienta seco.
         DecoratedBox(
           decoration: BoxDecoration(
-            gradient: _entroBien ? null : AppTheme.degradadoMarca,
+            gradient: _entroBien ? null : AppTheme.degradadoDe(context),
             color: _entroBien ? AppTheme.cumplidorDe(context) : null,
             borderRadius: BorderRadius.circular(16),
           ),
@@ -283,10 +287,10 @@ class _LoginScreenState extends State<LoginScreen> {
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 220),
               child: _entroBien
-                  ? const Icon(
+                  ? Icon(
                       Icons.check_rounded,
-                      key: ValueKey('ok'),
-                      color: Colors.white,
+                      key: const ValueKey('ok'),
+                      color: AppTheme.sobreAcentoDe(context),
                     ).animate().scale(
                       begin: const Offset(0.4, 0.4),
                       end: const Offset(1, 1),
@@ -294,19 +298,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       curve: Curves.easeOutBack,
                     )
                   : _cargando
-                  ? const SizedBox(
-                      key: ValueKey('cargando'),
+                  ? SizedBox(
+                      key: const ValueKey('cargando'),
                       height: 22,
                       width: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
-                        color: Colors.white,
+                        color: AppTheme.sobreAcentoDe(context),
                       ),
                     )
                   : Text(
                       _modoRegistro ? 'Crear cuenta' : 'Iniciar sesión',
                       key: const ValueKey('texto'),
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(
+                        color: AppTheme.sobreAcentoDe(context),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
             ),
           ),

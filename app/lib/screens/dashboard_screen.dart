@@ -92,7 +92,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// Abre el formulario y, si se guardo, vuelve a pedir los saldos.
   /// El saldo nuevo lo calcula la base de datos: la app no lo suma a mano.
   Future<void> _abrirMovimiento(ClienteSaldo cliente) async {
-    final guardado = await RegistrarMovimientoSheet.mostrar(context, cliente);
+    final guardado = await RegistrarMovimientoSheet.mostrar(
+      context,
+      cliente,
+      negocio: _negocio,
+    );
     if (!guardado || !mounted) return;
 
     await _cargar();
@@ -637,10 +641,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         height: diametro,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: AppTheme.degradadoMarca,
+          gradient: AppTheme.degradadoDe(context),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.azulProfundo.withValues(alpha: 0.35),
+              color: AppTheme.acentoDe(context).withValues(alpha: 0.32),
               blurRadius: 26,
               offset: const Offset(0, 10),
             ),
@@ -660,13 +664,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Container(
                   padding: EdgeInsets.all(diametro * 0.06),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: AppTheme.sobreAcentoDe(
+                      context,
+                    ).withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.nfc,
                     size: diametro * 0.28,
-                    color: Colors.white,
+                    color: AppTheme.sobreAcentoDe(context),
                   ),
                 ),
                 SizedBox(height: diametro * 0.07),
@@ -675,7 +681,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: TextStyle(
                     fontSize: diametro * 0.125,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppTheme.sobreAcentoDe(context),
                     letterSpacing: 0.8,
                   ),
                 ),
@@ -684,7 +690,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   'Toca para escanear',
                   style: TextStyle(
                     fontSize: diametro * 0.072,
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: AppTheme.sobreAcentoDe(
+                      context,
+                    ).withValues(alpha: 0.78),
                   ),
                 ),
               ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import 'historial_movimientos_screen.dart';
 
@@ -8,6 +9,7 @@ import '../models/cliente_saldo.dart';
 import '../services/lector_nfc.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
+import '../utils/recordatorio.dart';
 
 /// Registrar un fiado o un abono para un cliente, y asociar/desvincular su
 /// llavero NFC.
@@ -16,16 +18,26 @@ import '../utils/formato.dart';
 /// cliente esta parado al frente: lo que falta es el monto, no a quien.
 class RegistrarMovimientoSheet extends StatefulWidget {
   final ClienteSaldo cliente;
+  final String negocio;
 
-  const RegistrarMovimientoSheet({super.key, required this.cliente});
+  const RegistrarMovimientoSheet({
+    super.key,
+    required this.cliente,
+    required this.negocio,
+  });
 
   /// Devuelve true si se guardo algo, para que la lista se refresque.
-  static Future<bool> mostrar(BuildContext context, ClienteSaldo cliente) async {
+  static Future<bool> mostrar(
+    BuildContext context,
+    ClienteSaldo cliente, {
+    String negocio = 'tu negocio',
+  }) async {
     final guardado = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => RegistrarMovimientoSheet(cliente: cliente),
+      builder: (_) =>
+          RegistrarMovimientoSheet(cliente: cliente, negocio: negocio),
     );
     return guardado ?? false;
   }
@@ -315,6 +327,7 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
             _seccionLimiteCredito(),
             const SizedBox(height: 16),
             _seccionLlavero(),
+            _botonWhatsApp(),
             const SizedBox(height: 18),
             SegmentedButton<bool>(
               segments: const [
@@ -524,6 +537,56 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
           ),
         ],
       ],
+    );
+  }
+
+  /// Manda el recordatorio de deuda por WhatsApp.
+  ///
+  /// El mensaje lleva el saldo y el enlace al portal del cliente, para que
+  /// pueda revisar el detalle por su cuenta en vez de tener que creerle al
+  /// mensaje. Abre WhatsApp con el texto escrito: el vendedor lo lee y decide
+  /// si lo manda, porque el tono con un cliente de años no lo elige la app.
+  Widget _botonWhatsApp() {
+    final token = widget.cliente.tokenPortal;
+    final enlace = token == null
+        ? null
+        : enlaceWhatsApp(widget.cliente, widget.negocio, token);
+
+    // Sin telefono o sin enlace del portal no hay nada que mandar. Mostrar un
+    // boton que no hace nada es peor que no mostrarlo.
+    if (enlace == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: OutlinedButton.icon(
+        onPressed: () async {
+          final abrio = await launchUrl(
+            enlace,
+            mode: LaunchMode.externalApplication,
+          );
+          if (!abrio && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No se pudo abrir WhatsApp en este equipo.'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+        icon: const Icon(Icons.chat_bubble_outline, size: 18),
+        label: Text(
+          widget.cliente.debe
+              ? 'Recordar por WhatsApp'
+              : 'Enviar su estado de cuenta',
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppTheme.cumplidorDe(context),
+          side: BorderSide(
+            color: AppTheme.cumplidorDe(context).withValues(alpha: 0.5),
+          ),
+          minimumSize: const Size.fromHeight(44),
+        ),
+      ),
     );
   }
 
