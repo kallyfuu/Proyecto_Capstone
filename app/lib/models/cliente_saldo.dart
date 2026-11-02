@@ -9,6 +9,7 @@ class ClienteSaldo {
   final int saldo;
   final String? telefono;
   final String? estadoRiesgo;
+  final int? limiteCredito;
 
   const ClienteSaldo({
     required this.id,
@@ -16,6 +17,7 @@ class ClienteSaldo {
     required this.saldo,
     this.telefono,
     this.estadoRiesgo,
+    this.limiteCredito,
   });
 
   /// Lee los campos con tolerancia: si la vista todavia no expone alguna
@@ -27,8 +29,20 @@ class ClienteSaldo {
       saldo: (fila['saldo'] as num?)?.toInt() ?? 0,
       telefono: fila['telefono']?.toString(),
       estadoRiesgo: fila['estado_riesgo']?.toString(),
+      limiteCredito: (fila['limite_credito'] as num?)?.toInt(),
     );
   }
 
   bool get debe => saldo < 0;
+
+  /// Que porcion del cupo tiene ocupada, entre 0 y 1.
+  ///
+  /// Devuelve null cuando el cliente no tiene limite definido: mostrar una
+  /// barra vacia en ese caso haria creer que no le queda cupo, cuando en
+  /// realidad nadie le puso uno.
+  double? get cupoUsado {
+    final limite = limiteCredito ?? 0;
+    if (limite <= 0 || !debe) return null;
+    return (saldo.abs() / limite).clamp(0.0, 1.0);
+  }
 }

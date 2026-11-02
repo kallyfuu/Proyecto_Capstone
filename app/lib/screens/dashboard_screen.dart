@@ -149,12 +149,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 10, right: 4),
+        child: FloatingActionButton.extended(
         onPressed: _nuevoCliente,
         backgroundColor: AppTheme.acentoDe(context),
         foregroundColor: AppTheme.sobreAcentoDe(context),
-        icon: const Icon(Icons.person_add_alt),
-        label: const Text('Nuevo cliente'),
+          icon: const Icon(Icons.person_add_alt),
+          label: const Text('Nuevo cliente'),
+        ),
       ),
     );
   }
@@ -634,11 +637,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         height: diametro,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppTheme.azulClaro, AppTheme.azulProfundo],
-          ),
+          gradient: AppTheme.degradadoMarca,
           boxShadow: [
             BoxShadow(
               color: AppTheme.azulProfundo.withValues(alpha: 0.35),
@@ -896,6 +895,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _filaCliente(ClienteSaldo cliente) {
     final color = AppTheme.colorEstadoDe(context, cliente.estadoRiesgo);
     final estado = cliente.estadoRiesgo ?? 'Cumplidor';
+    final cupo = cliente.cupoUsado;
     final nombre = cliente.nombre.trim();
     final inicial = nombre.isEmpty ? '?' : nombre[0].toUpperCase();
 
@@ -986,6 +986,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     ),
+                    // Cuanto del cupo que le fijo el vendedor lleva
+                    // ocupado. Solo aparece si tiene limite definido: una
+                    // barra vacia haria creer que no le queda cupo cuando en
+                    // realidad nadie le puso uno.
+                    if (cupo != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(3),
+                              child: LinearProgressIndicator(
+                                value: cupo,
+                                minHeight: 4,
+                                backgroundColor: AppTheme.textoTenueDe(
+                                  context,
+                                ).withValues(alpha: 0.15),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  color,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Cupo ${(cupo * 100).round()}%',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textoTenueDe(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

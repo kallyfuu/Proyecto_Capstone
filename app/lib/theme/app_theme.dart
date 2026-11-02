@@ -12,6 +12,14 @@ class AppTheme {
   /// una sala con mala senal caeria a la fuente del sistema.
   static const String fuente = 'PlusJakartaSans';
 
+  /// Degradado de marca. Va en el circulo del NFC, la cabecera del login y
+  /// el boton principal, para que el acento sea el mismo en toda la app.
+  static const LinearGradient degradadoMarca = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF4338CA), Color(0xFF6366F1)],
+  );
+
   /// Sombra de tarjeta: apenas perceptible. Una sombra negra pesada envejece
   /// la interfaz y ademas cuesta mas de dibujar en gama media.
   static List<BoxShadow> get sombraSuave => [
@@ -23,13 +31,13 @@ class AppTheme {
   ];
 
   // Marca
-  static const Color azulProfundo = Color(0xFF1B3B6F);
-  static const Color azulClaro = Color(0xFF2E5EAA);
+  static const Color azulProfundo = Color(0xFF4F46E5);
+  static const Color azulClaro = Color(0xFF6366F1);
 
   // Semaforo de riesgo (tema claro): significan estado, nunca decoracion.
-  static const Color cumplidor = Color(0xFF1E8E3E);
+  static const Color cumplidor = Color(0xFF10B981);
   static const Color atrasado = Color(0xFFF29900);
-  static const Color moroso = Color(0xFFD93025);
+  static const Color moroso = Color(0xFFF43F5E);
 
   // Semaforo de riesgo (tema oscuro): versiones aclaradas para que no
   // queden apagadas sobre fondo negro. Los iconos y textos del panel se
@@ -39,7 +47,7 @@ class AppTheme {
   static const Color morosoOscuro = Color(0xFFE85D52);
 
   // Neutros (tema claro)
-  static const Color fondo = Color(0xFFF6F7F9);
+  static const Color fondo = Color(0xFFF8F9FD);
   static const Color superficie = Colors.white;
   static const Color textoTenue = Color(0xFF5F6368);
   static const Color bordeClaro = Color(0xFFE8EAED);
@@ -175,8 +183,8 @@ class AppTheme {
         color: superficie,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: Color(0xFFE8EAED)),
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFE2E8F0)),
         ),
       ),
     );
@@ -239,7 +247,7 @@ class AppTheme {
         color: superficieOscura,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: bordeOscuro),
         ),
       ),

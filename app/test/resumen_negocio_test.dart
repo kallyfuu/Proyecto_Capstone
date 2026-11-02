@@ -122,4 +122,32 @@ void main() {
       expect(vacio.deudaPromedio, 0);
     });
   });
+
+  group('Cupo usado del cliente', () {
+    ClienteSaldo con(int saldo, int? limite) => ClienteSaldo(
+      id: 'x',
+      nombre: 'x',
+      saldo: saldo,
+      limiteCredito: limite,
+    );
+
+    test('Calcula que porcion del limite lleva ocupada', () {
+      expect(con(-15000, 20000).cupoUsado, 0.75);
+    });
+
+    test('Sin limite definido no hay cupo que mostrar', () {
+      // Una barra vacia haria creer que no le queda cupo, cuando en realidad
+      // nadie le puso uno.
+      expect(con(-15000, null).cupoUsado, isNull);
+      expect(con(-15000, 0).cupoUsado, isNull);
+    });
+
+    test('El que no debe nada no muestra barra', () {
+      expect(con(0, 20000).cupoUsado, isNull);
+    });
+
+    test('Pasarse del limite no desborda la barra', () {
+      expect(con(-30000, 20000).cupoUsado, 1.0);
+    });
+  });
 }
