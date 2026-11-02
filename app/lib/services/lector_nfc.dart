@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:nfc_manager/nfc_manager_android.dart';
 
@@ -78,7 +79,12 @@ class LectorNfc {
         // Los NTAG215 son ISO 14443, igual que la mayoria de las tarjetas de
         // proximidad que se usan en Chile.
         pollingOptions: {NfcPollingOption.iso14443},
-        onDiscovered: (NfcTag tag) async => terminar(_uidDe(tag)),
+        onDiscovered: (NfcTag tag) async {
+          // El vendedor tiene el telefono contra el llavero y no le esta
+          // mirando la pantalla: el golpecito le avisa que ya leyo.
+          await HapticFeedback.lightImpact();
+          await terminar(_uidDe(tag));
+        },
       );
     } catch (_) {
       return null;

@@ -7,6 +7,21 @@ import 'package:flutter/material.dart';
 /// (Cumplidor / Atrasado / Moroso). Si el color de marca fuera verde, un boton
 /// verde y un cliente "al dia" se verian igual y el semaforo dejaria de leerse.
 class AppTheme {
+  /// Tipografia de la app. Va empaquetada en assets/fonts, no descargada:
+  /// google_fonts la baja de internet la primera vez que se abre la app y en
+  /// una sala con mala senal caeria a la fuente del sistema.
+  static const String fuente = 'PlusJakartaSans';
+
+  /// Sombra de tarjeta: apenas perceptible. Una sombra negra pesada envejece
+  /// la interfaz y ademas cuesta mas de dibujar en gama media.
+  static List<BoxShadow> get sombraSuave => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.04),
+      blurRadius: 10,
+      offset: const Offset(0, 2),
+    ),
+  ];
+
   // Marca
   static const Color azulProfundo = Color(0xFF1B3B6F);
   static const Color azulClaro = Color(0xFF2E5EAA);
@@ -116,6 +131,7 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      fontFamily: fuente,
       colorScheme: scheme,
       scaffoldBackgroundColor: fondo,
       appBarTheme: const AppBarTheme(
@@ -177,6 +193,7 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      fontFamily: fuente,
       brightness: Brightness.dark,
       colorScheme: scheme,
       scaffoldBackgroundColor: fondoOscuro,
