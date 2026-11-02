@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/cliente_saldo.dart';
 import '../models/resumen_negocio.dart';
+import '../widgets/esqueleto_clientes.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
 
@@ -86,7 +88,7 @@ class _PanelScreenState extends State<PanelScreen> {
 
   Widget _cuerpo() {
     if (_cargando) {
-      return const Center(child: CircularProgressIndicator());
+      return const FondoEsqueleto(child: EsqueletoPanel());
     }
     if (_error != null) {
       return Center(
@@ -114,7 +116,10 @@ class _PanelScreenState extends State<PanelScreen> {
           _GraficoMensual(
             resumen: r,
             mesElegido: _mesElegido ?? r.meses.length - 1,
-            onElegir: (i) => setState(() => _mesElegido = i),
+            onElegir: (i) {
+              HapticFeedback.selectionClick();
+              setState(() => _mesElegido = i);
+            },
           ),
           const SizedBox(height: 24),
           _tituloSeccion('ESTADO DE LA CARTERA'),

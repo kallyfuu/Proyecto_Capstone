@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/cliente_saldo.dart';
+import '../widgets/esqueleto_clientes.dart';
 import '../theme/app_theme.dart';
 import '../theme/modo_tema.dart';
 import '../utils/formato.dart';
@@ -185,7 +186,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _cuerpo() {
     if (_cargando && _clientes.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const FondoEsqueleto(child: EsqueletoClientes());
     }
 
     if (_error != null) {
@@ -562,28 +563,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _filaCliente(ClienteSaldo cliente) {
     final color = AppTheme.colorEstadoDe(context, cliente.estadoRiesgo);
-    final inicial = cliente.nombre.trim().isEmpty
-        ? '?'
-        : cliente.nombre.trim()[0].toUpperCase();
+    final estado = cliente.estadoRiesgo ?? 'Cumplidor';
+    final nombre = cliente.nombre.trim();
+    final inicial = nombre.isEmpty ? '?' : nombre[0].toUpperCase();
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.bordeDe(context)),
+        boxShadow: AppTheme.sombraSuave,
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => _abrirMovimiento(cliente),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: color.withValues(alpha: 0.14),
+              // Avatar con la inicial sobre el color de su estado, suave.
+              // Da identidad a cada fila sin agregar una foto que nadie va a
+              // cargar en un negocio de barrio.
+              Container(
+                width: 46,
+                height: 46,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
                 child: Text(
                   inicial,
                   style: TextStyle(
                     color: color,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 19,
                   ),
                 ),
               ),
@@ -593,42 +608,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      cliente.nombre,
+                      nombre,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
                       ),
                     ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
+                    const SizedBox(height: 6),
+                    // Insignia del semaforo: lleva el texto del estado, no
+                    // solo el color. El ambar queda bajo el contraste minimo
+                    // sobre fondo claro, asi que el color nunca puede ser la
+                    // unica pista de que significa.
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          cliente.estadoRiesgo ?? 'Cumplidor',
-                          style: TextStyle(fontSize: 12, color: color),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Text(
+                            estado,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: color,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-              Text(
-                textoSaldo(cliente.saldo),
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: cliente.debe
-                      ? AppTheme.morosoDe(context)
-                      : AppTheme.cumplidorDe(context),
-                ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    textoSaldo(cliente.saldo),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: cliente.debe
+                          ? AppTheme.morosoDe(context)
+                          : AppTheme.cumplidorDe(context),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: AppTheme.textoTenueDe(context),
+                  ),
+                ],
               ),
             ],
           ),

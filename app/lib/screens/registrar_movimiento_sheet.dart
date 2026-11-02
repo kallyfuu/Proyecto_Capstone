@@ -135,6 +135,8 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
         throw StateError('La base no devolvio la fila insertada.');
       }
 
+      // Confirmacion de que la plata quedo registrada, sin tener que leer.
+      await HapticFeedback.mediumImpact();
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       setState(() {
