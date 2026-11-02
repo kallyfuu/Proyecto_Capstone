@@ -12,6 +12,27 @@ class AppTheme {
   /// una sala con mala senal caeria a la fuente del sistema.
   static const String fuente = 'PlusJakartaSans';
 
+  /// Degradado de marca. Va en el circulo del NFC, la cabecera del login y
+  /// el boton principal, para que el acento sea el mismo en toda la app.
+  static const LinearGradient degradadoMarca = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF00D084), Color(0xFF059669)],
+  );
+
+  /// Degradado de acento para el modo oscuro.
+  static const LinearGradient degradadoMenta = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF00F59B), Color(0xFF10B981)],
+  );
+
+  /// El degradado que corresponde al tema activo.
+  static LinearGradient degradadoDe(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? degradadoMenta
+      : degradadoMarca;
+
   /// Sombra de tarjeta: apenas perceptible. Una sombra negra pesada envejece
   /// la interfaz y ademas cuesta mas de dibujar en gama media.
   static List<BoxShadow> get sombraSuave => [
@@ -22,37 +43,49 @@ class AppTheme {
     ),
   ];
 
-  // Marca
-  static const Color azulProfundo = Color(0xFF1B3B6F);
-  static const Color azulClaro = Color(0xFF2E5EAA);
+  // Marca. En claro el acento es un menta mas brillante que el del semaforo,
+  // y en oscuro pasa lo mismo: asi un boton y un cliente "al dia" no terminan
+  // pintados del mismo color exacto.
+  static const Color azulProfundo = Color(0xFF059669);
+  static const Color azulClaro = Color(0xFF00D084);
 
   // Semaforo de riesgo (tema claro): significan estado, nunca decoracion.
-  static const Color cumplidor = Color(0xFF1E8E3E);
-  static const Color atrasado = Color(0xFFF29900);
-  static const Color moroso = Color(0xFFD93025);
+  static const Color cumplidor = Color(0xFF059669);
+  static const Color atrasado = Color(0xFFF59E0B);
+  static const Color moroso = Color(0xFFE11D48);
 
   // Semaforo de riesgo (tema oscuro): versiones aclaradas para que no
   // queden apagadas sobre fondo negro. Los iconos y textos del panel se
   // mantienen, porque compensan la limitacion para daltonismo.
-  static const Color cumplidorOscuro = Color(0xFF2FA45C);
-  static const Color atrasadoOscuro = Color(0xFFE0A020);
-  static const Color morosoOscuro = Color(0xFFE85D52);
+  static const Color cumplidorOscuro = Color(0xFF10B981);
+  static const Color atrasadoOscuro = Color(0xFFF59E0B);
+  static const Color morosoOscuro = Color(0xFFEF4444);
 
   // Neutros (tema claro)
-  static const Color fondo = Color(0xFFF6F7F9);
+  static const Color fondo = Color(0xFFF8FAFC);
   static const Color superficie = Colors.white;
-  static const Color textoTenue = Color(0xFF5F6368);
+  static const Color textoTenue = Color(0xFF64748B);
+
+  /// Texto principal en el tema claro.
+  static const Color titanio = Color(0xFF0F172A);
   static const Color bordeClaro = Color(0xFFE8EAED);
 
   // Neutros (tema oscuro)
-  static const Color fondoOscuro = Color(0xFF121417);
-  static const Color superficieOscura = Color(0xFF1C1F24);
-  static const Color textoTenueOscuro = Color(0xFF9AA0A6);
-  static const Color bordeOscuro = Color(0xFF3C4043);
+  static const Color fondoOscuro = Color(0xFF0F1218);
+  /// Titanio: las tarjetas se separan del fondo por su color, no por una
+  /// sombra. En oscuro una sombra no se ve, asi que la jerarquia la tiene que
+  /// dar el contraste entre superficies.
+  static const Color superficieOscura = Color(0xFF181E29);
+
+  /// Fondo de los campos de texto en oscuro: un paso mas hundido que la
+  /// tarjeta, para que se lea que son huecos donde se escribe.
+  static const Color campoOscuro = Color(0xFF121620);
+  static const Color textoTenueOscuro = Color(0xFF94A3B8);
+  static const Color bordeOscuro = Color(0xFF263042);
 
   // Azul de acento para botones y enfoques sobre fondo oscuro.
-  static const Color azulSobreOscuro = Color(0xFF8AB4F8);
-  static const Color textoSobreAzulOscuro = Color(0xFF0B1B36);
+  static const Color azulSobreOscuro = Color(0xFF10B981);
+  static const Color textoSobreAzulOscuro = Color(0xFF04140E);
 
   // Manija (la rayita) de las hojas inferiores.
   static const Color tiradorClaro = Color(0xFFDADCE0);
@@ -116,8 +149,12 @@ class AppTheme {
       _esOscuro(context) ? azulSobreOscuro : azulProfundo;
 
   /// Color del texto o icono que va encima de [acentoDe].
+  ///
+  /// Oscuro en los dos temas, porque el acento es menta en los dos. Blanco
+  /// sobre el menta brillante del degradado da 1,9 a 1 y no se lee; titanio
+  /// sobre ese mismo menta pasa de 9 a 1.
   static Color sobreAcentoDe(BuildContext context) =>
-      _esOscuro(context) ? textoSobreAzulOscuro : Colors.white;
+      _esOscuro(context) ? textoSobreAzulOscuro : titanio;
 
   static Color tiradorDe(BuildContext context) =>
       _esOscuro(context) ? tiradorOscuro : tiradorClaro;
@@ -127,6 +164,7 @@ class AppTheme {
       seedColor: azulProfundo,
       primary: azulProfundo,
       surface: superficie,
+      onSurface: titanio,
     );
 
     return ThemeData(
@@ -175,8 +213,8 @@ class AppTheme {
         color: superficie,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: Color(0xFFE8EAED)),
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFE2E8F0)),
         ),
       ),
     );
@@ -205,7 +243,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: superficieOscura,
+        fillColor: campoOscuro,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         border: OutlineInputBorder(
@@ -239,7 +277,7 @@ class AppTheme {
         color: superficieOscura,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: bordeOscuro),
         ),
       ),

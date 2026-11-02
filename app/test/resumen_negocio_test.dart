@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fiado_nfc/models/cliente_saldo.dart';
 import 'package:fiado_nfc/models/resumen_negocio.dart';
+import 'package:fiado_nfc/utils/recordatorio.dart';
 
 ClienteSaldo cliente(String nombre, int saldo, [String? estado]) =>
     ClienteSaldo(
@@ -120,6 +121,81 @@ void main() {
       );
       expect(vacio.porcentajeRecuperado, isNull);
       expect(vacio.deudaPromedio, 0);
+    });
+  });
+
+  group('Cupo usado del cliente', () {
+    ClienteSaldo con(int saldo, int? limite) => ClienteSaldo(
+      id: 'x',
+      nombre: 'x',
+      saldo: saldo,
+      limiteCredito: limite,
+    );
+
+    test('Calcula que porcion del limite lleva ocupada', () {
+      expect(con(-15000, 20000).cupoUsado, 0.75);
+    });
+
+    test('Sin limite definido no hay cupo que mostrar', () {
+      // Una barra vacia haria creer que no le queda cupo, cuando en realidad
+      // nadie le puso uno.
+      expect(con(-15000, null).cupoUsado, isNull);
+      expect(con(-15000, 0).cupoUsado, isNull);
+    });
+
+    test('El que no debe nada no muestra barra', () {
+      expect(con(0, 20000).cupoUsado, isNull);
+    });
+
+    test('Pasarse del limite no desborda la barra', () {
+      expect(con(-30000, 20000).cupoUsado, 1.0);
+    });
+  });
+
+  group('Telefono para WhatsApp', () {
+    test('Acepta el formato largo con codigo de pais y espacios', () {
+      expect(telefonoParaWhatsApp('+56 9 1234 5678'), '56912345678');
+    });
+
+    test('Le agrega el codigo de pais al celular de nueve digitos', () {
+      expect(telefonoParaWhatsApp('912345678'), '56912345678');
+    });
+
+    test('Le agrega el nueve al numero de ocho digitos', () {
+      expect(telefonoParaWhatsApp('12345678'), '56912345678');
+    });
+
+    test('Sin telefono no hay numero que armar', () {
+      expect(telefonoParaWhatsApp(null), isNull);
+      expect(telefonoParaWhatsApp('sin numero'), isNull);
+    });
+  });
+
+  group('Mensaje del recordatorio', () {
+    final debe = ClienteSaldo(
+      id: '1',
+      nombre: 'Pedro',
+      saldo: -37500,
+      telefono: '912345678',
+      tokenPortal: 'abc',
+    );
+
+    test('Al que debe le dice cuanto y le manda su enlace', () {
+      final texto = mensajeRecordatorio(debe, 'Mi negocio', 'abc');
+      expect(texto, contains(r'$37.500'));
+      expect(texto, contains('?token=abc'));
+    });
+
+    test('Al que esta al dia no le cobra nada', () {
+      final alDia = ClienteSaldo(id: '2', nombre: 'Rosa', saldo: 0);
+      final texto = mensajeRecordatorio(alDia, 'Mi negocio', 'xyz');
+      expect(texto, contains('al día'));
+      expect(texto, isNot(contains('saldo pendiente')));
+    });
+
+    test('Sin telefono no se arma enlace', () {
+      final sinFono = ClienteSaldo(id: '3', nombre: 'Ana', saldo: -1000);
+      expect(enlaceWhatsApp(sinFono, 'Mi negocio', 'tok'), isNull);
     });
   });
 }

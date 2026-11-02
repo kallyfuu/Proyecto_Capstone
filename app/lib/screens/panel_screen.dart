@@ -45,12 +45,16 @@ class _PanelScreenState extends State<PanelScreen> {
       final desde = DateTime(ahora.year, ahora.month - 5, 1);
 
       // Ninguna consulta filtra por negocio: lo hace el RLS del motor.
-      final movimientos = await _supabase
-          .from('transacciones')
-          .select('monto, fecha_local, synced_at')
-          .gte('fecha_local', desde.toUtc().toIso8601String());
-
-      final filas = await _supabase.from('v_clientes_saldo').select();
+      // Independientes entre si: van juntas y no una tras otra.
+      final respuestas = await Future.wait([
+        _supabase
+            .from('transacciones')
+            .select('monto, fecha_local, synced_at')
+            .gte('fecha_local', desde.toUtc().toIso8601String()),
+        _supabase.from('v_clientes_saldo').select(),
+      ]);
+      final movimientos = respuestas[0];
+      final filas = respuestas[1];
 
       if (!mounted) return;
 

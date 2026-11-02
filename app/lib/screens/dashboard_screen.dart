@@ -53,15 +53,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
 
     try {
-      final negocios = await _supabase.from('negocios').select();
-
+      // Las dos consultas son independientes, asi que salen juntas en vez de
+      // una despues de la otra. Con una conexion lenta eso es la diferencia
+      // entre esperar una vez y esperar dos.
+      //
       // Ordena la base, no la app: el que mas debe primero, que es a quien hay
       // que cobrarle. Ojo que en Dart `order` viene DESCENDENTE por defecto,
       // por eso el `ascending: true` explicito.
-      final filas = await _supabase
-          .from('v_clientes_saldo')
-          .select()
-          .order('saldo', ascending: true);
+      final respuestas = await Future.wait([
+        _supabase.from('negocios').select(),
+        _supabase
+            .from('v_clientes_saldo')
+            .select()
+            .order('saldo', ascending: true),
+      ]);
+      final negocios = respuestas[0];
+      final filas = respuestas[1];
 
       if (!mounted) return;
 
@@ -85,7 +92,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// Abre el formulario y, si se guardo, vuelve a pedir los saldos.
   /// El saldo nuevo lo calcula la base de datos: la app no lo suma a mano.
   Future<void> _abrirMovimiento(ClienteSaldo cliente) async {
-    final guardado = await RegistrarMovimientoSheet.mostrar(context, cliente);
+    final guardado = await RegistrarMovimientoSheet.mostrar(
+      context,
+      cliente,
+      negocio: _negocio,
+    );
     if (!guardado || !mounted) return;
 
     await _cargar();
@@ -142,12 +153,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 10, right: 4),
+        child: FloatingActionButton.extended(
         onPressed: _nuevoCliente,
         backgroundColor: AppTheme.acentoDe(context),
         foregroundColor: AppTheme.sobreAcentoDe(context),
-        icon: const Icon(Icons.person_add_alt),
-        label: const Text('Nuevo cliente'),
+          icon: const Icon(Icons.person_add_alt),
+          label: const Text('Nuevo cliente'),
+        ),
       ),
     );
   }
@@ -409,14 +423,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // Respiracion lenta para que se note que es el acceso
               // principal. Es una escala sobre un widget chico: no redibuja
               // la lista ni cuesta cuadros.
-              _botonCircularNfc(diametro)
-                  .animate(onPlay: (c) => c.repeat(reverse: true))
-                  .scale(
-                    begin: const Offset(1, 1),
-                    end: const Offset(1.035, 1.035),
-                    duration: 1600.ms,
-                    curve: Curves.easeInOut,
+              // RepaintBoundary aisla el pulso en su propia capa: sin el,
+              // cada cuadro de la animacion obliga a repintar toda la lista
+              // de clientes que esta debajo.
+              //
+              // El alto reservado es mayor que el circulo para que la escala
+              // tenga donde crecer. Sin ese margen, el widget se pasa de su
+              // caja y Flutter dibuja la franja de desborde.
+              RepaintBoundary(
+                child: SizedBox(
+                  height: diametro * 1.08,
+                  child: Center(
+                    child: _botonCircularNfc(diametro)
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .scale(
+                          begin: const Offset(1, 1),
+                          end: const Offset(1.035, 1.035),
+                          duration: 1600.ms,
+                          curve: Curves.easeInOut,
+                        ),
                   ),
+                ),
+              ),
               const SizedBox(height: 20),
               _tarjetaResumen(totalFiado, cuantosDeben, totalClientes),
               if (_clientes.isEmpty)
@@ -613,14 +641,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         height: diametro,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppTheme.azulClaro, AppTheme.azulProfundo],
-          ),
+          gradient: AppTheme.degradadoDe(context),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.azulProfundo.withValues(alpha: 0.35),
+              color: AppTheme.acentoDe(context).withValues(alpha: 0.32),
               blurRadius: 26,
               offset: const Offset(0, 10),
             ),
@@ -638,29 +662,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(18),
+                  padding: EdgeInsets.all(diametro * 0.06),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: AppTheme.sobreAcentoDe(
+                      context,
+                    ).withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.nfc, size: 72, color: Colors.white),
+                  child: Icon(
+                    Icons.nfc,
+                    size: diametro * 0.28,
+                    color: AppTheme.sobreAcentoDe(context),
+                  ),
                 ),
-                const SizedBox(height: 18),
-                const Text(
+                SizedBox(height: diametro * 0.07),
+                Text(
                   'Leer NFC',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: diametro * 0.125,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppTheme.sobreAcentoDe(context),
                     letterSpacing: 0.8,
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: diametro * 0.02),
                 Text(
                   'Toca para escanear',
                   style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: diametro * 0.072,
+                    color: AppTheme.sobreAcentoDe(
+                      context,
+                    ).withValues(alpha: 0.78),
                   ),
                 ),
               ],
@@ -871,6 +903,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _filaCliente(ClienteSaldo cliente) {
     final color = AppTheme.colorEstadoDe(context, cliente.estadoRiesgo);
     final estado = cliente.estadoRiesgo ?? 'Cumplidor';
+    final cupo = cliente.cupoUsado;
     final nombre = cliente.nombre.trim();
     final inicial = nombre.isEmpty ? '?' : nombre[0].toUpperCase();
 
@@ -961,6 +994,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     ),
+                    // Cuanto del cupo que le fijo el vendedor lleva
+                    // ocupado. Solo aparece si tiene limite definido: una
+                    // barra vacia haria creer que no le queda cupo cuando en
+                    // realidad nadie le puso uno.
+                    if (cupo != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(3),
+                              child: LinearProgressIndicator(
+                                value: cupo,
+                                minHeight: 4,
+                                backgroundColor: AppTheme.textoTenueDe(
+                                  context,
+                                ).withValues(alpha: 0.15),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  color,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Cupo ${(cupo * 100).round()}%',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textoTenueDe(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
