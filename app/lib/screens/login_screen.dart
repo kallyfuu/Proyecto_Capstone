@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../theme/app_theme.dart';
@@ -21,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _cargando = false;
   bool _modoRegistro = false;
+  bool _verClave = false;
   String? _error;
 
   @override
@@ -83,34 +85,67 @@ class _LoginScreenState extends State<LoginScreen> {
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
-              child: Form(
-                key: _formKey,
+              // Entrada suave, una sola vez. No se repite: una animacion que
+              // vuelve a correr cada vez que algo cambia marea y cuesta cuadros.
+              child:
+                  Form(
+                    key: _formKey,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(
-                      Icons.storefront,
-                      size: 64,
-                      color: AppTheme.acentoDe(context),
+                    Center(
+                      child: Container(
+                        width: 84,
+                        height: 84,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppTheme.acentoDe(context),
+                              AppTheme.azulClaro,
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.acentoDe(
+                                context,
+                              ).withValues(alpha: 0.28),
+                              blurRadius: 22,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.nfc_rounded,
+                          size: 40,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 22),
                     Text(
-                      'Fiado NFC',
+                      'Fiado Inteligente',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 29,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.6,
                         color: AppTheme.acentoDe(context),
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'El cuaderno de fiados, en tu celular',
+                      'Gestión de fiado con NFC',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppTheme.textoTenueDe(context)),
+                      style: TextStyle(
+                        color: AppTheme.textoTenueDe(context),
+                        fontSize: 14,
+                      ),
                     ),
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 34),
                     TextFormField(
                       controller: _emailCtrl,
                       keyboardType: TextInputType.emailAddress,
@@ -130,10 +165,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 14),
                     TextFormField(
                       controller: _passCtrl,
-                      obscureText: true,
-                      decoration: const InputDecoration(
+                      obscureText: !_verClave,
+                      decoration: InputDecoration(
                         labelText: 'Contraseña',
-                        prefixIcon: Icon(Icons.lock_outline),
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          tooltip: _verClave ? 'Ocultar' : 'Mostrar',
+                          icon: Icon(
+                            _verClave
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 20,
+                          ),
+                          onPressed: () =>
+                              setState(() => _verClave = !_verClave),
+                        ),
                       ),
                       validator: (v) {
                         if (v == null || v.isEmpty) {
@@ -202,7 +248,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-              ),
+                  ).animate().fadeIn(duration: 450.ms).slideY(
+                    begin: 0.08,
+                    end: 0,
+                    duration: 450.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
             ),
           ),
         ),
