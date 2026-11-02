@@ -53,15 +53,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
 
     try {
-      final negocios = await _supabase.from('negocios').select();
-
+      // Las dos consultas son independientes, asi que salen juntas en vez de
+      // una despues de la otra. Con una conexion lenta eso es la diferencia
+      // entre esperar una vez y esperar dos.
+      //
       // Ordena la base, no la app: el que mas debe primero, que es a quien hay
       // que cobrarle. Ojo que en Dart `order` viene DESCENDENTE por defecto,
       // por eso el `ascending: true` explicito.
-      final filas = await _supabase
-          .from('v_clientes_saldo')
-          .select()
-          .order('saldo', ascending: true);
+      final respuestas = await Future.wait([
+        _supabase.from('negocios').select(),
+        _supabase
+            .from('v_clientes_saldo')
+            .select()
+            .order('saldo', ascending: true),
+      ]);
+      final negocios = respuestas[0];
+      final filas = respuestas[1];
 
       if (!mounted) return;
 
@@ -409,14 +416,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // Respiracion lenta para que se note que es el acceso
               // principal. Es una escala sobre un widget chico: no redibuja
               // la lista ni cuesta cuadros.
-              _botonCircularNfc(diametro)
-                  .animate(onPlay: (c) => c.repeat(reverse: true))
-                  .scale(
-                    begin: const Offset(1, 1),
-                    end: const Offset(1.035, 1.035),
-                    duration: 1600.ms,
-                    curve: Curves.easeInOut,
+              // RepaintBoundary aisla el pulso en su propia capa: sin el,
+              // cada cuadro de la animacion obliga a repintar toda la lista
+              // de clientes que esta debajo.
+              //
+              // El alto reservado es mayor que el circulo para que la escala
+              // tenga donde crecer. Sin ese margen, el widget se pasa de su
+              // caja y Flutter dibuja la franja de desborde.
+              RepaintBoundary(
+                child: SizedBox(
+                  height: diametro * 1.08,
+                  child: Center(
+                    child: _botonCircularNfc(diametro)
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .scale(
+                          begin: const Offset(1, 1),
+                          end: const Offset(1.035, 1.035),
+                          duration: 1600.ms,
+                          curve: Curves.easeInOut,
+                        ),
                   ),
+                ),
+              ),
               const SizedBox(height: 20),
               _tarjetaResumen(totalFiado, cuantosDeben, totalClientes),
               if (_clientes.isEmpty)
@@ -638,28 +659,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(18),
+                  padding: EdgeInsets.all(diametro * 0.06),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.nfc, size: 72, color: Colors.white),
+                  child: Icon(
+                    Icons.nfc,
+                    size: diametro * 0.28,
+                    color: Colors.white,
+                  ),
                 ),
-                const SizedBox(height: 18),
-                const Text(
+                SizedBox(height: diametro * 0.07),
+                Text(
                   'Leer NFC',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: diametro * 0.125,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     letterSpacing: 0.8,
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: diametro * 0.02),
                 Text(
                   'Toca para escanear',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: diametro * 0.072,
                     color: Colors.white.withValues(alpha: 0.8),
                   ),
                 ),

@@ -66,7 +66,21 @@ class AuthGate extends StatelessWidget {
           );
         }
 
-        return sesion == null ? const LoginScreen() : const DashboardScreen();
+        // Desvanecido entre el login y el panel.
+        //
+        // No se puede usar PageRouteBuilder aqui: nadie navega. Esta pantalla
+        // escucha la sesion y cambia el widget que muestra, asi que no hay
+        // ruta que empujar ni transicion de ruta que configurar. El cambio se
+        // suaviza con AnimatedSwitcher, que es el equivalente cuando lo que
+        // cambia es el contenido y no la ruta.
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 400),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          child: sesion == null
+              ? const LoginScreen(key: ValueKey('login'))
+              : const DashboardScreen(key: ValueKey('panel')),
+        );
       },
     );
   }

@@ -23,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _cargando = false;
   bool _modoRegistro = false;
   bool _verClave = false;
+  bool _entroBien = false;
   String? _error;
 
   @override
@@ -51,7 +52,11 @@ class _LoginScreenState extends State<LoginScreen> {
         await auth.signInWithPassword(email: email, password: password);
       }
       // Si sale bien no navegamos a mano: el AuthGate de main.dart escucha el
-      // cambio de sesion y cambia de pantalla solo.
+      // cambio de sesion y cambia de pantalla solo. Antes de que eso pase,
+      // dejamos el boton en verde con el visto para que la transicion no se
+      // sienta un corte seco.
+      if (mounted) setState(() => _entroBien = true);
+      await Future<void>.delayed(const Duration(milliseconds: 550));
     } on AuthException catch (e) {
       setState(() => _error = _mensajeAmigable(e.message));
     } catch (_) {
@@ -79,15 +84,26 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.fondoDe(context),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(22),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               // Entrada suave, una sola vez. No se repite: una animacion que
               // vuelve a correr cada vez que algo cambia marea y cuesta cuadros.
-              child:
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(24, 30, 24, 26),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: AppTheme.bordeDe(context)),
+                      boxShadow: AppTheme.sombraSuave,
+                    ),
+                    child:
                   Form(
                     key: _formKey,
                 child: Column(
@@ -217,20 +233,47 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                     const SizedBox(height: 24),
+                    // El boton cuenta en que va: espera, exito o listo para
+                    // pulsar. El verde con el visto dura un instante antes de
+                    // que el AuthGate cambie de pantalla, para que el salto al
+                    // panel no se sienta seco.
                     FilledButton(
-                      onPressed: _cargando ? null : _enviar,
-                      child: _cargando
-                          ? SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: AppTheme.sobreAcentoDe(context),
-                              ),
+                      style: _entroBien
+                          ? FilledButton.styleFrom(
+                              backgroundColor: AppTheme.cumplidorDe(context),
                             )
-                          : Text(
-                              _modoRegistro ? 'Crear cuenta' : 'Iniciar sesión',
-                            ),
+                          : null,
+                      onPressed: (_cargando || _entroBien) ? null : _enviar,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 220),
+                        child: _entroBien
+                            ? Icon(
+                                Icons.check_rounded,
+                                key: const ValueKey('ok'),
+                                color: AppTheme.sobreAcentoDe(context),
+                              ).animate().scale(
+                                begin: const Offset(0.4, 0.4),
+                                end: const Offset(1, 1),
+                                duration: 260.ms,
+                                curve: Curves.easeOutBack,
+                              )
+                            : _cargando
+                            ? SizedBox(
+                                key: const ValueKey('cargando'),
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: AppTheme.sobreAcentoDe(context),
+                                ),
+                              )
+                            : Text(
+                                _modoRegistro
+                                    ? 'Crear cuenta'
+                                    : 'Iniciar sesión',
+                                key: const ValueKey('texto'),
+                              ),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextButton(
@@ -248,12 +291,26 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                  ).animate().fadeIn(duration: 450.ms).slideY(
-                    begin: 0.08,
-                    end: 0,
-                    duration: 450.ms,
-                    curve: Curves.easeOutCubic,
                   ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Sistema de Fiado Inteligente  •  Versión 1.0',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: AppTheme.textoTenueDe(
+                        context,
+                      ).withValues(alpha: 0.85),
+                    ),
+                  ),
+                ],
+              ).animate().fadeIn(duration: 450.ms).slideY(
+                begin: 0.08,
+                end: 0,
+                duration: 450.ms,
+                curve: Curves.easeOutCubic,
+              ),
             ),
           ),
         ),
