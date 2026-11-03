@@ -41,10 +41,10 @@ class BienvenidaNegocioDialog extends StatefulWidget {
   static String _claveDireccion(String uid) => 'negocio_direccion_$uid';
   static String _claveTelefono(String uid) => 'negocio_telefono_$uid';
 
-  /// Obtiene los datos guardados del usuario actual ( desde userMetadata o
-  /// SharedPreferences).
+  /// Obtiene los datos guardados del usuario actual desde la fila de `negocios`
+  /// (con respaldo en userMetadata y SharedPreferences).
   static Future<DatosNegocio?> obtenerDatosActuales({
-    String? nombreNegocioBase,
+    Map<String, dynamic>? filaNegocio,
   }) async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return null;
@@ -53,22 +53,30 @@ class BienvenidaNegocioDialog extends StatefulWidget {
     final prefs = await SharedPreferences.getInstance();
 
     final dueno =
-        (meta['nombre_dueno'] ?? prefs.getString(_claveDueno(user.id)) ?? '')
+        (filaNegocio?['nombre_dueno'] ??
+                meta['nombre_dueno'] ??
+                prefs.getString(_claveDueno(user.id)) ??
+                '')
             .toString()
             .trim();
     final negocio =
-        (meta['nombre_negocio'] ??
+        (filaNegocio?['nombre_negocio'] ??
+                filaNegocio?['nombre'] ??
+                meta['nombre_negocio'] ??
                 prefs.getString(_claveNombre(user.id)) ??
-                nombreNegocioBase ??
                 '')
             .toString()
             .trim();
     final direccion =
-        (meta['direccion'] ?? prefs.getString(_claveDireccion(user.id)) ?? '')
+        (filaNegocio?['direccion'] ??
+                meta['direccion'] ??
+                prefs.getString(_claveDireccion(user.id)) ??
+                '')
             .toString()
             .trim();
     final telefono =
-        (meta['telefono_negocio'] ??
+        (filaNegocio?['telefono'] ??
+                meta['telefono_negocio'] ??
                 prefs.getString(_claveTelefono(user.id)) ??
                 '')
             .toString()
@@ -78,15 +86,23 @@ class BienvenidaNegocioDialog extends StatefulWidget {
       nombreDueno: dueno,
       nombreNegocio: negocio == 'Mi almacén' ? '' : negocio,
       direccion: direccion,
-      correo: user.email ?? '',
+      correo: (filaNegocio?['correo'] ?? user.email ?? '').toString(),
       telefono: telefono,
     );
   }
 
   /// Indica si el usuario actual ya completó la ventana de bienvenida.
-  static Future<bool> yaCompletoBienvenida() async {
+  static Future<bool> yaCompletoBienvenida({
+    Map<String, dynamic>? filaNegocio,
+  }) async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return true;
+
+    // Si en la tabla `negocios` ya tiene cargado el nombre del dueño,
+    // ya completó la bienvenida.
+    final duenoEnTabla =
+        (filaNegocio?['nombre_dueno'] ?? '').toString().trim();
+    if (duenoEnTabla.isNotEmpty) return true;
 
     final meta = user.userMetadata;
     if (meta != null && meta['bienvenida_completada'] == true) {
@@ -176,8 +192,17 @@ class _BienvenidaNegocioDialogState extends State<BienvenidaNegocioDialog> {
         throw StateError('No hay sesión activa.');
       }
 
-      // 1. Guardamos en los metadatos del usuario de Supabase Auth para que
-      // viaje con su cuenta en cualquier dispositivo.
+      // 1. Guardamos directamente en la tabla `negocios` de Supabase.
+      await supabase.from('negocios').upsert({
+        'id': user.id,
+        'nombre_dueno': dueno,
+        'nombre_negocio': negocio,
+        'direccion': direccion,
+        'correo': correo,
+        'telefono': telefono,
+      });
+
+      // 2. Guardamos tambien en los metadatos del usuario de Supabase Auth.
       await supabase.auth.updateUser(
         UserAttributes(
           data: {
@@ -189,22 +214,6 @@ class _BienvenidaNegocioDialogState extends State<BienvenidaNegocioDialog> {
           },
         ),
       );
-
-      // 2. Intentamos actualizar el nombre en la tabla `negocios` si la
-      // política RLS y las columnas lo permiten.
-      try {
-        await supabase
-            .from('negocios')
-            .update({'nombre_negocio': negocio})
-            .eq('id', user.id);
-      } catch (_) {
-        try {
-          await supabase
-              .from('negocios')
-              .update({'nombre': negocio})
-              .eq('id', user.id);
-        } catch (_) {}
-      }
 
       // 3. Guardamos copia local en SharedPreferences para respuesta inmediata.
       final prefs = await SharedPreferences.getInstance();

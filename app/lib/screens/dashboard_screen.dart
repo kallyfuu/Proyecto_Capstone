@@ -80,7 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           (fila?['nombre_negocio'] ?? fila?['nombre'] ?? 'Mi almacén')
               .toString();
       final datosPerfil = await BienvenidaNegocioDialog.obtenerDatosActuales(
-        nombreNegocioBase: nombreBase,
+        filaNegocio: fila,
       );
 
       if (!mounted) return;
@@ -98,7 +98,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       if (!_verificoBienvenida) {
         _verificoBienvenida = true;
-        final yaCompleto = await BienvenidaNegocioDialog.yaCompletoBienvenida();
+        final yaCompleto = await BienvenidaNegocioDialog.yaCompletoBienvenida(
+          filaNegocio: fila,
+        );
         // Si es un usuario nuevo que aun no completo su perfil de bienvenida,
         // mostramos la ventana emergente para registrar sus datos.
         if (!yaCompleto && mounted) {
@@ -126,8 +128,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   /// Abre la ventana para ver o actualizar los datos del dueño y del negocio.
   Future<void> _editarDatosNegocio() async {
+    final negocios = await _supabase.from('negocios').select();
+    final fila = negocios.isEmpty ? null : negocios.first;
     final actuales = await BienvenidaNegocioDialog.obtenerDatosActuales(
-      nombreNegocioBase: _negocio,
+      filaNegocio: fila,
     );
     if (!mounted) return;
 
@@ -212,16 +216,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
-        ),
-      ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 10, right: 4),
-        child: FloatingActionButton.extended(
-        onPressed: _nuevoCliente,
-        backgroundColor: AppTheme.acentoDe(context),
-        foregroundColor: AppTheme.sobreAcentoDe(context),
-          icon: const Icon(Icons.person_add_alt),
-          label: const Text('Nuevo cliente'),
         ),
       ),
     );
@@ -322,11 +316,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               _botonRedondo(
+                icono: Icons.person_add_alt_1_outlined,
+                tooltip: 'Nuevo cliente',
+                onTap: _nuevoCliente,
+              ),
+              _botonRedondo(
                 icono: Icons.insights_outlined,
                 tooltip: 'Panel del negocio',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const PanelScreen()),
-                ),
+                onTap: () => Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const PanelScreen())),
               ),
               _botonRedondo(
                 icono: Icons.more_horiz,
@@ -399,10 +398,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
                   color: colorEstado.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(999),
@@ -456,142 +452,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .fold<int>(0, (suma, c) => suma + c.saldo.abs());
     final cuantosDeben = _clientes.where((c) => c.debe).length;
     final totalClientes = _clientes.length;
-    final busqueda = normalizar(_busqueda);
-    final clientesFiltrados = _clientes.where((cliente) {
-      if (!normalizar(cliente.nombre).contains(busqueda)) return false;
-      if (_filtroEstado == null) return true;
-      return (cliente.estadoRiesgo ?? 'Cumplidor') == _filtroEstado;
-    }).toList();
-    final clientesVisibles = clientesFiltrados.take(_clientesVisibles).toList();
 
-    // La animacion de entrada solo corre en la vista por defecto. Si se
-    // reanimara con cada letra del buscador, la lista parpadearia mientras se
-    // escribe y gastaria cuadros al pedo.
-    final animarEntrada = busqueda.isEmpty && _filtroEstado == null;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final anchoMax = constraints.maxWidth * 0.80;
+        final altoMax = (constraints.maxHeight - 160) * 0.78;
+        final menor = anchoMax < altoMax ? anchoMax : altoMax;
+        final diametro = menor.clamp(220.0, 320.0).toDouble();
 
-    return RefreshIndicator(
-      onRefresh: _cargar,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Antes ocupaba casi toda la pantalla y habia que desplazarse para
-          // ver un solo cliente. Ahora toma alrededor de un cuarto del alto,
-          // que alcanza para que se note sin tapar la lista.
-          final alto = MediaQuery.of(context).size.height;
-          final diametro = (alto * 0.21)
-              .clamp(130.0, 180.0)
-              .toDouble()
-              .clamp(130.0, constraints.maxWidth * 0.55);
-
-          return ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            // El espacio de abajo deja respirar al ultimo cliente: sin el,
-            // el boton flotante "Nuevo cliente" le queda encima.
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 85),
-            children: [
-              // Respiracion lenta para que se note que es el acceso
-              // principal. Es una escala sobre un widget chico: no redibuja
-              // la lista ni cuesta cuadros.
-              // RepaintBoundary aisla el pulso en su propia capa: sin el,
-              // cada cuadro de la animacion obliga a repintar toda la lista
-              // de clientes que esta debajo.
-              //
-              // El alto reservado es mayor que el circulo para que la escala
-              // tenga donde crecer. Sin ese margen, el widget se pasa de su
-              // caja y Flutter dibuja la franja de desborde.
-              RepaintBoundary(
-                child: SizedBox(
-                  height: diametro * 1.08,
-                  child: Center(
-                    child: _botonCircularNfc(diametro)
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .scale(
-                          begin: const Offset(1, 1),
-                          end: const Offset(1.035, 1.035),
-                          duration: 1600.ms,
-                          curve: Curves.easeInOut,
-                        ),
+        return Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: RepaintBoundary(
+                  child: SizedBox(
+                    width: diametro * 1.08,
+                    height: diametro * 1.08,
+                    child: Center(
+                      child: _botonCircularNfc(diametro)
+                          .animate(onPlay: (c) => c.repeat(reverse: true))
+                          .scale(
+                            begin: const Offset(1, 1),
+                            end: const Offset(1.035, 1.035),
+                            duration: 1600.ms,
+                            curve: Curves.easeInOut,
+                          ),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              _tarjetaResumen(totalFiado, cuantosDeben, totalClientes),
-              if (_clientes.isEmpty)
-                _mensajeCentrado(
-                  icono: Icons.people_outline,
-                  color: AppTheme.textoTenueDe(context),
-                  titulo: 'Todavía no hay clientes',
-                  detalle: 'Agrega el primero y podrás empezar a registrarle fiados.',
-                  accion: FilledButton.icon(
-                    onPressed: _nuevoCliente,
-                    icon: const Icon(Icons.person_add_alt),
-                    label: const Text('Agregar cliente'),
-                  ),
-                )
-              else ...[
-                const SizedBox(height: 16),
-                TextField(
-                  onChanged: (v) => setState(() {
-                    _busqueda = v;
-                    _clientesVisibles = 15;
-                  }),
-                  decoration: const InputDecoration(
-                    hintText: 'Buscar cliente por nombre',
-                    prefixIcon: Icon(Icons.search),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _chipsDeEstado(),
-                const SizedBox(height: 16),
-                if (clientesFiltrados.isEmpty)
-                  _mensajeListaVacia()
-                else ...[
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 8),
-                    child: Text(
-                      'CLIENTES',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.1,
-                        color: AppTheme.textoTenueDe(context)
-                            .withValues(alpha: 0.9),
-                      ),
-                    ),
-                  ),
-                  for (final (i, cliente) in clientesVisibles.indexed)
-                    if (animarEntrada)
-                      _filaCliente(cliente)
-                          .animate()
-                          .fadeIn(
-                            delay: (50 * i).ms,
-                            duration: 260.ms,
-                          )
-                          .slideY(
-                            begin: 0.12,
-                            end: 0,
-                            delay: (50 * i).ms,
-                            duration: 260.ms,
-                            curve: Curves.easeOutCubic,
-                          )
-                    else
-                      _filaCliente(cliente),
-                  if (clientesVisibles.length < clientesFiltrados.length)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: OutlinedButton.icon(
-                        onPressed: () => setState(() {
-                          _clientesVisibles += 15;
-                        }),
-                        icon: const Icon(Icons.expand_more),
-                        label: const Text('Cargar más'),
-                      ),
-                    ),
-                ],
-              ],
-            ],
-          );
-        },
-      ),
+            ),
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                child: _tarjetaResumen(totalFiado, cuantosDeben, totalClientes),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -599,7 +499,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ///
   /// Filtra en memoria sobre los clientes ya cargados: no vuelve a consultar
   /// la base, asi que responde al instante.
-  Widget _chipsDeEstado() {
+  Widget _chipsDeEstado({StateSetter? setSheetState}) {
     final conteo = <String, int>{'Cumplidor': 0, 'Atrasado': 0, 'Moroso': 0};
     for (final c in _clientes) {
       final e = c.estadoRiesgo ?? 'Cumplidor';
@@ -608,12 +508,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final opciones = <(String?, String, int, Color)>[
       (null, 'Todos', _clientes.length, AppTheme.acentoDe(context)),
-      (
-        'Moroso',
-        'Morosos',
-        conteo['Moroso']!,
-        AppTheme.morosoDe(context),
-      ),
+      ('Moroso', 'Morosos', conteo['Moroso']!, AppTheme.morosoDe(context)),
       (
         'Atrasado',
         'Atrasados',
@@ -639,10 +534,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final activo = _filtroEstado == valor;
 
           return GestureDetector(
-            onTap: () => setState(() {
-              _filtroEstado = valor;
-              _clientesVisibles = 15;
-            }),
+            onTap: () {
+              setState(() {
+                _filtroEstado = valor;
+                _clientesVisibles = 15;
+              });
+              setSheetState?.call(() {});
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               alignment: Alignment.center,
@@ -675,9 +573,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: activo ? FontWeight.w700 : FontWeight.w500,
-                      color: activo
-                          ? color
-                          : AppTheme.textoTenueDe(context),
+                      color: activo ? color : AppTheme.textoTenueDe(context),
                     ),
                   ),
                 ],
@@ -732,9 +628,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Container(
                   padding: EdgeInsets.all(diametro * 0.06),
                   decoration: BoxDecoration(
-                    color: AppTheme.sobreAcentoDe(
-                      context,
-                    ).withValues(alpha: 0.12),
+                    color: AppTheme.sobreAcentoDe(context)
+                        .withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -757,10 +652,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   'Toca para escanear',
                   style: TextStyle(
-                    fontSize: diametro * 0.072,
-                    color: AppTheme.sobreAcentoDe(
-                      context,
-                    ).withValues(alpha: 0.78),
+                    fontSize: diametro * 0.080,
+                    color: AppTheme.sobreAcentoDe(context)
+                        .withValues(alpha: 0.78),
                   ),
                 ),
               ],
@@ -771,14 +665,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  /// Tarjeta con el total fiado, tocable para ver el detalle de clientes.
+  /// Tarjeta con el total fiado en el footer, tocable para desplegar clientes.
   Widget _tarjetaResumen(int totalFiado, int cuantosDeben, int totalClientes) {
     final palabraClientes = totalClientes == 1 ? 'cliente' : 'clientes';
     final superficie = Theme.of(context).colorScheme.surface;
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 380),
       decoration: BoxDecoration(
         color: superficie,
         borderRadius: BorderRadius.circular(20),
@@ -848,7 +741,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  /// Despliega la lista y búsqueda de clientes en un modal inferior.
+  /// Despliega la lista, búsqueda y filtros de clientes en un modal inferior.
   void _mostrarListaClientes() {
     showModalBottomSheet(
       context: context,
@@ -862,7 +755,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           builder: (context, setSheetState) {
             final busqueda = normalizar(_busqueda);
             final clientesFiltrados = _clientes.where((cliente) {
-              return normalizar(cliente.nombre).contains(busqueda);
+              if (!normalizar(cliente.nombre).contains(busqueda)) return false;
+              if (_filtroEstado == null) return true;
+              return (cliente.estadoRiesgo ?? 'Cumplidor') == _filtroEstado;
             }).toList();
             final clientesVisibles = clientesFiltrados
                 .take(_clientesVisibles)
@@ -913,14 +808,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: 12),
                       TextField(
                         onChanged: (v) {
-                          setState(() => _busqueda = v);
-                          setSheetState(() => _busqueda = v);
+                          setState(() {
+                            _busqueda = v;
+                            _clientesVisibles = 15;
+                          });
+                          setSheetState(() {});
                         },
                         decoration: const InputDecoration(
                           hintText: 'Buscar cliente por nombre',
                           prefixIcon: Icon(Icons.search),
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      _chipsDeEstado(setSheetState: setSheetState),
                       const SizedBox(height: 16),
                       Expanded(
                         child: clientesFiltrados.isEmpty
@@ -936,7 +836,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 itemBuilder: (context, index) {
                                   if (index < clientesVisibles.length) {
                                     final c = clientesVisibles[index];
-                                    return _filaCliente(c);
+                                    return _filaCliente(
+                                      c,
+                                      onActualizado: () => setSheetState(() {}),
+                                    );
                                   }
                                   return Padding(
                                     padding: const EdgeInsets.only(
@@ -946,9 +849,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     child: OutlinedButton.icon(
                                       onPressed: () {
                                         setState(() => _clientesVisibles += 15);
-                                        setSheetState(
-                                          () => _clientesVisibles += 15,
-                                        );
+                                        setSheetState(() {});
                                       },
                                       icon: const Icon(Icons.expand_more),
                                       label: const Text('Cargar más'),
@@ -968,7 +869,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _filaCliente(ClienteSaldo cliente) {
+  Widget _filaCliente(ClienteSaldo cliente, {VoidCallback? onActualizado}) {
     final color = AppTheme.colorEstadoDe(context, cliente.estadoRiesgo);
     final estado = cliente.estadoRiesgo ?? 'Cumplidor';
     final cupo = cliente.cupoUsado;
@@ -985,7 +886,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => _abrirMovimiento(cliente),
+        onTap: () async {
+          await _abrirMovimiento(cliente);
+          onActualizado?.call();
+        },
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
           child: Row(
@@ -1076,9 +980,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: LinearProgressIndicator(
                                 value: cupo,
                                 minHeight: 4,
-                                backgroundColor: AppTheme.textoTenueDe(
-                                  context,
-                                ).withValues(alpha: 0.15),
+                                backgroundColor: AppTheme.textoTenueDe(context)
+                                    .withValues(alpha: 0.15),
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   color,
                                 ),
