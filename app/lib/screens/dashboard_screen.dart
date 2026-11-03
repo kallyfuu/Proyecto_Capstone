@@ -35,9 +35,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _dueno;
   bool _verificoBienvenida = false;
   List<ClienteSaldo> _clientes = const [];
-  String _busqueda = '';
-  String? _filtroEstado;
-  int _clientesVisibles = 15;
   bool _cargando = true;
   String? _error;
 
@@ -499,7 +496,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ///
   /// Filtra en memoria sobre los clientes ya cargados: no vuelve a consultar
   /// la base, asi que responde al instante.
-  Widget _chipsDeEstado({StateSetter? setSheetState}) {
+  Widget _chipsDeEstado({
+    required String? filtroActivo,
+    required ValueChanged<String?> onCambiarFiltro,
+  }) {
     final conteo = <String, int>{'Cumplidor': 0, 'Atrasado': 0, 'Moroso': 0};
     for (final c in _clientes) {
       final e = c.estadoRiesgo ?? 'Cumplidor';
@@ -531,16 +531,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final (valor, etiqueta, cuantos, color) = opciones[i];
-          final activo = _filtroEstado == valor;
+          final activo = filtroActivo == valor;
 
           return GestureDetector(
-            onTap: () {
-              setState(() {
-                _filtroEstado = valor;
-                _clientesVisibles = 15;
-              });
-              setSheetState?.call(() {});
-            },
+            onTap: () => onCambiarFiltro(valor),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               alignment: Alignment.center,
@@ -743,6 +737,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   /// Despliega la lista, búsqueda y filtros de clientes en un modal inferior.
   void _mostrarListaClientes() {
+    String busquedaModal = '';
+    String? filtroEstadoModal;
+    int clientesVisiblesModal = 15;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -753,14 +751,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            final busqueda = normalizar(_busqueda);
+            final busquedaNorm = normalizar(busquedaModal);
             final clientesFiltrados = _clientes.where((cliente) {
-              if (!normalizar(cliente.nombre).contains(busqueda)) return false;
-              if (_filtroEstado == null) return true;
-              return (cliente.estadoRiesgo ?? 'Cumplidor') == _filtroEstado;
+              if (!normalizar(cliente.nombre).contains(busquedaNorm)) return false;
+              if (filtroEstadoModal == null) return true;
+              return (cliente.estadoRiesgo ?? 'Cumplidor') == filtroEstadoModal;
             }).toList();
             final clientesVisibles = clientesFiltrados
-                .take(_clientesVisibles)
+                .take(clientesVisiblesModal)
                 .toList();
 
             return DraggableScrollableSheet(
@@ -808,11 +806,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: 12),
                       TextField(
                         onChanged: (v) {
-                          setState(() {
-                            _busqueda = v;
-                            _clientesVisibles = 15;
+                          setSheetState(() {
+                            busquedaModal = v;
+                            clientesVisiblesModal = 15;
                           });
-                          setSheetState(() {});
                         },
                         decoration: const InputDecoration(
                           hintText: 'Buscar cliente por nombre',
@@ -820,7 +817,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _chipsDeEstado(setSheetState: setSheetState),
+                      _chipsDeEstado(
+                        filtroActivo: filtroEstadoModal,
+                        onCambiarFiltro: (nuevo) {
+                          setSheetState(() {
+                            filtroEstadoModal = nuevo;
+                            clientesVisiblesModal = 15;
+                          });
+                        },
+                      ),
                       const SizedBox(height: 16),
                       Expanded(
                         child: clientesFiltrados.isEmpty
@@ -848,8 +853,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                     child: OutlinedButton.icon(
                                       onPressed: () {
-                                        setState(() => _clientesVisibles += 15);
-                                        setSheetState(() {});
+                                        setSheetState(() {
+                                          clientesVisiblesModal += 15;
+                                        });
                                       },
                                       icon: const Icon(Icons.expand_more),
                                       label: const Text('Cargar más'),
