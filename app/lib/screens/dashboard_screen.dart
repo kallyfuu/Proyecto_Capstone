@@ -652,7 +652,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   'Toca para escanear',
                   style: TextStyle(
-                    fontSize: diametro * 0.080,
+                    fontSize: diametro * 0.05,
                     color: AppTheme.sobreAcentoDe(context)
                         .withValues(alpha: 0.78),
                   ),

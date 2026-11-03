@@ -7,7 +7,7 @@ import '../utils/formato.dart';
 
 /// Dar de alta un cliente nuevo.
 ///
-/// Solo el nombre es obligatorio: cuando llega alguien nuevo al almacen y hay
+/// Nombre y teléfono son obligatorios: cuando llega alguien nuevo al almacen y hay
 /// cola, pedirle telefono y limite de credito frena la venta. Esos datos se
 /// pueden completar despues.
 ///
@@ -52,9 +52,15 @@ class _NuevoClienteSheetState extends State<NuevoClienteSheet> {
 
   Future<void> _guardar() async {
     final nombre = _nombreCtrl.text.trim();
+    final telefono = _telefonoCtrl.text.trim();
 
     if (nombre.isEmpty) {
       setState(() => _error = 'Escribe el nombre del cliente.');
+      return;
+    }
+
+    if (telefono.isEmpty) {
+      setState(() => _error = 'Escribe el teléfono del cliente.');
       return;
     }
 
@@ -65,7 +71,6 @@ class _NuevoClienteSheetState extends State<NuevoClienteSheet> {
 
     try {
       final supabase = Supabase.instance.client;
-      final telefono = _telefonoCtrl.text.trim();
 
       // `negocio_id` sale de la sesion, nunca de un campo del formulario: es
       // la misma condicion que exige el RLS para dejar pasar el INSERT.
@@ -141,7 +146,7 @@ class _NuevoClienteSheetState extends State<NuevoClienteSheet> {
             ),
             const SizedBox(height: 2),
             Text(
-              'Solo el nombre es obligatorio',
+              'Nombre y teléfono son obligatorios',
               style: TextStyle(color: AppTheme.textoTenueDe(context)),
             ),
             const SizedBox(height: 20),
@@ -160,7 +165,7 @@ class _NuevoClienteSheetState extends State<NuevoClienteSheet> {
               controller: _telefonoCtrl,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(
-                labelText: 'Teléfono (opcional)',
+                labelText: 'Teléfono',
                 prefixIcon: Icon(Icons.phone_outlined),
               ),
             ),
