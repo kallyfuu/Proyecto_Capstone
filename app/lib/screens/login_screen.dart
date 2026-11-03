@@ -47,7 +47,23 @@ class _LoginScreenState extends State<LoginScreen> {
       final password = _passCtrl.text;
 
       if (_modoRegistro) {
-        await auth.signUp(email: email, password: password);
+        final respuesta = await auth.signUp(email: email, password: password);
+        // Si Supabase pide confirmar el correo antes de abrir sesion,
+        // avisamos con una ventana emergente y volvemos al modo login.
+        if (respuesta.session == null) {
+          if (mounted) {
+            setState(() => _cargando = false);
+            await _mostrarDialogoConfirmacion(email);
+            if (mounted) {
+              setState(() {
+                _modoRegistro = false;
+                _entroBien = false;
+                _passCtrl.clear();
+              });
+            }
+          }
+          return;
+        }
       } else {
         await auth.signInWithPassword(email: email, password: password);
       }
@@ -66,9 +82,95 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// Muestra solo los 2 primeros caracteres antes del @ y reemplaza el resto con 'x'.
+  String _ocultarCorreo(String email) {
+    final partes = email.split('@');
+    if (partes.length != 2) return email;
+    final usuario = partes[0];
+    final dominio = partes[1];
+    if (usuario.length <= 2) {
+      return '${usuario}xxx@$dominio';
+    }
+    final visibles = usuario.substring(0, 2);
+    final ocultos = 'x' * (usuario.length - 2);
+    return '$visibles$ocultos@$dominio';
+  }
+
+  /// Muestra una ventana emergente avisando que debe confirmar su correo.
+  Future<void> _mostrarDialogoConfirmacion(String email) {
+    final correoOculto = _ocultarCorreo(email);
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: AppTheme.bordeDe(ctx)),
+        ),
+        icon: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: AppTheme.acentoDe(ctx).withValues(alpha: 0.14),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.mark_email_read_outlined,
+            color: AppTheme.acentoDe(ctx),
+            size: 28,
+          ),
+        ),
+        title: const Text(
+          'Confirma tu correo',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 19),
+        ),
+        content: Text(
+          'Le ha llegado una confirmación a su email ($correoOculto).\n\n'
+          'Confirme su dirección de email desde su bandeja de entrada para poder iniciar sesión.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14,
+            height: 1.45,
+            color: AppTheme.textoTenueDe(ctx),
+          ),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: AppTheme.degradadoDe(ctx),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                ),
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  'Volver al login',
+                  style: TextStyle(
+                    color: AppTheme.sobreAcentoDe(ctx),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Supabase responde en ingles; el almacenero no tiene por que leer eso.
   String _mensajeAmigable(String mensaje) {
     final m = mensaje.toLowerCase();
+    if (m.contains('email not confirmed')) {
+      return 'Aún no confirmas tu correo. Revisa tu bandeja de entrada.';
+    }
     if (m.contains('invalid login')) {
       return 'Correo o contraseña incorrectos.';
     }
