@@ -8,6 +8,7 @@ import '../theme/app_theme.dart';
 import '../theme/modo_tema.dart';
 import '../utils/formato.dart';
 import '../utils/texto.dart';
+import 'bienvenida_negocio_dialog.dart';
 import 'leer_llavero_sheet.dart';
 import 'nuevo_cliente_sheet.dart';
 import 'panel_screen.dart';
@@ -31,6 +32,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // El estado se guarda tal cual, no envuelto en un Future. Asi "recargar" es
   // simplemente volver a llamar a _cargar() y pisar estas variables.
   String _negocio = 'Mi almacén';
+  String? _dueno;
+  bool _verificoBienvenida = false;
   List<ClienteSaldo> _clientes = const [];
   String _busqueda = '';
   String? _filtroEstado;
@@ -73,19 +76,77 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (!mounted) return;
 
       final fila = negocios.isEmpty ? null : negocios.first;
+      final nombreBase =
+          (fila?['nombre_negocio'] ?? fila?['nombre'] ?? 'Mi almacén')
+              .toString();
+      final datosPerfil = await BienvenidaNegocioDialog.obtenerDatosActuales(
+        nombreNegocioBase: nombreBase,
+      );
+
+      if (!mounted) return;
 
       setState(() {
         _clientes = filas.map(ClienteSaldo.desdeMapa).toList();
-        _negocio = (fila?['nombre_negocio'] ?? fila?['nombre'] ?? 'Mi almacén')
-            .toString();
+        _dueno = (datosPerfil?.nombreDueno.isNotEmpty ?? false)
+            ? datosPerfil!.nombreDueno
+            : null;
+        _negocio = (datosPerfil?.nombreNegocio.isNotEmpty ?? false)
+            ? datosPerfil!.nombreNegocio
+            : nombreBase;
         _cargando = false;
       });
+
+      if (!_verificoBienvenida) {
+        _verificoBienvenida = true;
+        final yaCompleto = await BienvenidaNegocioDialog.yaCompletoBienvenida();
+        // Si es un usuario nuevo que aun no completo su perfil de bienvenida,
+        // mostramos la ventana emergente para registrar sus datos.
+        if (!yaCompleto && mounted) {
+          final guardados = await BienvenidaNegocioDialog.mostrar(
+            context,
+            datosIniciales: datosPerfil,
+            esEdicion: false,
+          );
+          if (guardados != null && mounted) {
+            setState(() {
+              _dueno = guardados.nombreDueno;
+              _negocio = guardados.nombreNegocio;
+            });
+          }
+        }
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _error = '$e';
         _cargando = false;
       });
+    }
+  }
+
+  /// Abre la ventana para ver o actualizar los datos del dueño y del negocio.
+  Future<void> _editarDatosNegocio() async {
+    final actuales = await BienvenidaNegocioDialog.obtenerDatosActuales(
+      nombreNegocioBase: _negocio,
+    );
+    if (!mounted) return;
+
+    final guardados = await BienvenidaNegocioDialog.mostrar(
+      context,
+      datosIniciales: actuales,
+      esEdicion: true,
+    );
+    if (guardados != null && mounted) {
+      setState(() {
+        _dueno = guardados.nombreDueno;
+        _negocio = guardados.nombreNegocio;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Datos del negocio actualizados'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -166,11 +227,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  /// Nombre de pila para el saludo, sacado del correo de la sesion.
-  ///
-  /// La base no guarda el nombre del vendedor, solo su correo. Antes que
-  /// mostrar la direccion completa, tomamos lo que va antes del arroba.
+  /// Nombre de pila para el saludo, usando el nombre del dueño si ya lo guardó
+  /// o sacado del correo de la sesion como respaldo.
   String get _nombreVendedor {
+    if (_dueno != null && _dueno!.trim().isNotEmpty) {
+      return _dueno!.trim();
+    }
     final correo = _supabase.auth.currentUser?.email ?? '';
     final antes = correo.split('@').first.split(RegExp(r'[._-]')).first;
     if (antes.isEmpty) return 'vendedor';
@@ -278,6 +340,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     icon: const Icon(Icons.more_horiz),
                     onSelected: (v) {
                       switch (v) {
+                        case 'negocio':
+                          _editarDatosNegocio();
                         case 'clientes':
                           _mostrarListaClientes();
                         case 'salir':
@@ -291,6 +355,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       }
                     },
                     itemBuilder: (_) => [
+                      const PopupMenuItem(
+                        value: 'negocio',
+                        child: Text('Datos del negocio'),
+                      ),
                       const PopupMenuItem(
                         value: 'clientes',
                         child: Text('Lista de clientes'),
