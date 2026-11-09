@@ -14,6 +14,17 @@ Future<void> main() async {
   await Supabase.initialize(
     url: SupabaseConfig.url,
     publishableKey: SupabaseConfig.anonKey,
+    // El navegador guardaba las respuestas y devolvia saldos viejos: despues
+    // de enviar un movimiento pendiente, la lista seguia mostrando el saldo
+    // anterior aunque la base ya tuviera el nuevo.
+    //
+    // En una app de plata eso es grave: el vendedor ve un numero que no es el
+    // que tiene el servidor. Pedimos explicitamente que cada consulta vaya al
+    // servidor en vez de salir de la memoria del navegador.
+    headers: const {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+    },
   );
 
   // Recupera el modo de tema que el usuario eligio la ultima vez.
