@@ -35,6 +35,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _dueno;
   bool _verificoBienvenida = false;
   List<ClienteSaldo> _clientes = const [];
+  String _busqueda = '';
+  String? _filtroEstado;
+  int _clientesVisibles = 15;
   bool _cargando = true;
   String? _error;
 
@@ -450,43 +453,116 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final cuantosDeben = _clientes.where((c) => c.debe).length;
     final totalClientes = _clientes.length;
 
+    // El circulo del NFC sigue siendo el protagonista, pero deja ver el
+    // principio de la lista. Si ocupa toda la pantalla, el vendedor no sabe
+    // quien le debe sin tocar nada, que es justo lo que la app vino a
+    // resolver.
+    final busqueda = normalizar(_busqueda);
+    final clientesFiltrados = _clientes.where((cliente) {
+      if (!normalizar(cliente.nombre).contains(busqueda)) return false;
+      if (_filtroEstado == null) return true;
+      return (cliente.estadoRiesgo ?? 'Cumplidor') == _filtroEstado;
+    }).toList();
+    final clientesVisibles = clientesFiltrados.take(_clientesVisibles).toList();
+    final animarEntrada = busqueda.isEmpty && _filtroEstado == null;
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        final anchoMax = constraints.maxWidth * 0.80;
-        final altoMax = (constraints.maxHeight - 160) * 0.78;
+        final anchoMax = constraints.maxWidth * 0.62;
+        final altoMax = constraints.maxHeight * 0.30;
         final menor = anchoMax < altoMax ? anchoMax : altoMax;
-        final diametro = menor.clamp(220.0, 320.0).toDouble();
+        final diametro = menor.clamp(170.0, 230.0).toDouble();
 
-        return Column(
-          children: [
-            Expanded(
-              child: Center(
-                child: RepaintBoundary(
-                  child: SizedBox(
-                    width: diametro * 1.08,
-                    height: diametro * 1.08,
-                    child: Center(
-                      child: _botonCircularNfc(diametro)
-                          .animate(onPlay: (c) => c.repeat(reverse: true))
-                          .scale(
-                            begin: const Offset(1, 1),
-                            end: const Offset(1.035, 1.035),
-                            duration: 1600.ms,
-                            curve: Curves.easeInOut,
-                          ),
-                    ),
+        return RefreshIndicator(
+          onRefresh: _cargar,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
+            children: [
+              // RepaintBoundary aisla el pulso en su propia capa: sin el, cada
+              // cuadro de la respiracion repinta toda la lista de abajo.
+              RepaintBoundary(
+                child: SizedBox(
+                  height: diametro * 1.08,
+                  child: Center(
+                    child: _botonCircularNfc(diametro)
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .scale(
+                          begin: const Offset(1, 1),
+                          end: const Offset(1.035, 1.035),
+                          duration: 1600.ms,
+                          curve: Curves.easeInOut,
+                        ),
                   ),
                 ),
               ),
-            ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-                child: _tarjetaResumen(totalFiado, cuantosDeben, totalClientes),
-              ),
-            ),
-          ],
+              const SizedBox(height: 18),
+              _tarjetaResumen(totalFiado, cuantosDeben, totalClientes),
+              if (_clientes.isEmpty)
+                _mensajeCentrado(
+                  icono: Icons.people_outline,
+                  color: AppTheme.textoTenueDe(context),
+                  titulo: 'Todavía no hay clientes',
+                  detalle:
+                      'Agrega el primero y podrás empezar a registrarle fiados.',
+                  accion: FilledButton.icon(
+                    onPressed: _nuevoCliente,
+                    icon: const Icon(Icons.person_add_alt),
+                    label: const Text('Agregar cliente'),
+                  ),
+                )
+              else ...[
+                const SizedBox(height: 18),
+                TextField(
+                  onChanged: (v) => setState(() {
+                    _busqueda = v;
+                    _clientesVisibles = 15;
+                  }),
+                  decoration: const InputDecoration(
+                    hintText: 'Buscar cliente por nombre',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _chipsDeEstado(
+                  filtroActivo: _filtroEstado,
+                  onCambiarFiltro: (nuevo) => setState(() {
+                    _filtroEstado = nuevo;
+                    _clientesVisibles = 15;
+                  }),
+                ),
+                const SizedBox(height: 16),
+                if (clientesFiltrados.isEmpty)
+                  _mensajeListaVacia()
+                else ...[
+                  for (final (i, cliente) in clientesVisibles.indexed)
+                    if (animarEntrada)
+                      _filaCliente(cliente)
+                          .animate()
+                          .fadeIn(delay: (50 * i).ms, duration: 260.ms)
+                          .slideY(
+                            begin: 0.12,
+                            end: 0,
+                            delay: (50 * i).ms,
+                            duration: 260.ms,
+                            curve: Curves.easeOutCubic,
+                          )
+                    else
+                      _filaCliente(cliente),
+                  if (clientesVisibles.length < clientesFiltrados.length)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: OutlinedButton.icon(
+                        onPressed: () =>
+                            setState(() => _clientesVisibles += 15),
+                        icon: const Icon(Icons.expand_more),
+                        label: const Text('Cargar más'),
+                      ),
+                    ),
+                ],
+              ],
+            ],
+          ),
         );
       },
     );
