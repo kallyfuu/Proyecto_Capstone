@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -87,13 +88,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
         filaNegocio: fila,
       );
 
-      // La ultima vista buena queda guardada para cuando no haya señal.
-      await AlmacenLocal.guardarClientes(
-        List<Map<String, dynamic>>.from(filas),
-        nombreBase,
-      );
       // Si volvio la señal, se empuja lo que haya quedado pendiente.
       final enviados = await AlmacenLocal.sincronizar();
+
+      // Los saldos de arriba se leyeron ANTES de enviar la cola, asi que no
+      // alcanzan a incluir lo que recien se subio. Si se envio algo hay que
+      // volver a preguntar: si no, el saldo retrocede justo despues de
+      // sincronizar, que es el momento en que mas se confia en el numero.
+      final saldos = enviados > 0
+          ? await _supabase
+                .from('v_clientes_saldo')
+                .select()
+                .order('saldo', ascending: true)
+                .timeout(const Duration(seconds: 8))
+          : filas;
+
+      // La ultima vista buena queda guardada para cuando no haya señal.
+      await AlmacenLocal.guardarClientes(
+        List<Map<String, dynamic>>.from(saldos),
+        nombreBase,
+      );
 
       if (!mounted) return;
 
@@ -113,7 +127,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() {
         _sinConexion = false;
         _fechaCache = null;
-        _clientes = filas.map(ClienteSaldo.desdeMapa).toList();
+        _clientes = saldos.map(ClienteSaldo.desdeMapa).toList();
         _dueno = (datosPerfil?.nombreDueno.isNotEmpty ?? false)
             ? datosPerfil!.nombreDueno
             : null;
@@ -155,9 +169,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (!mounted) return;
 
       if (guardado != null) {
-        final ajustados = aplicarPendientes(guardado.clientes, cola)
-            .map(ClienteSaldo.desdeMapa)
-            .toList();
+        final ajustados = aplicarPendientes(
+          guardado.clientes,
+          cola,
+        ).map(ClienteSaldo.desdeMapa).toList();
         ajustados.sort((a, b) => a.saldo.compareTo(b.saldo));
 
         setState(() {
@@ -513,37 +528,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: GestureDetector(
                       onTap: _reintentarEnvio,
                       child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.atrasadoDe(
-                          context,
-                        ).withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.cloud_upload_outlined,
-                            size: 12,
-                            color: AppTheme.atrasadoDe(context),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            cuantos == 1
-                                ? '1 sin enviar'
-                                : '$cuantos sin enviar',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.atrasadoDe(context)
+                              .withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.cloud_upload_outlined,
+                              size: 12,
                               color: AppTheme.atrasadoDe(context),
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 5),
+                            Text(
+                              cuantos == 1
+                                  ? '1 sin enviar'
+                                  : '$cuantos sin enviar',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.atrasadoDe(context),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -663,8 +677,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   icono: Icons.people_outline,
                   color: AppTheme.textoTenueDe(context),
                   titulo: 'Todavía no hay clientes',
-                  detalle:
-                      'Agrega el primero y podrás empezar a registrarle fiados.',
+                  detalle: 'Agrega el primero y podrás empezar a registrarle fiados.',
                   accion: FilledButton.icon(
                     onPressed: _nuevoCliente,
                     icon: const Icon(Icons.person_add_alt),
@@ -989,7 +1002,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           builder: (context, setSheetState) {
             final busquedaNorm = normalizar(busquedaModal);
             final clientesFiltrados = _clientes.where((cliente) {
-              if (!normalizar(cliente.nombre).contains(busquedaNorm)) return false;
+              if (!normalizar(cliente.nombre).contains(busquedaNorm))
+                return false;
               if (filtroEstadoModal == null) return true;
               return (cliente.estadoRiesgo ?? 'Cumplidor') == filtroEstadoModal;
             }).toList();
