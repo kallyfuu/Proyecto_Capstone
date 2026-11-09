@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -72,7 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .from('v_clientes_saldo')
             .select()
             .order('saldo', ascending: true),
-      ]);
+      ]).timeout(const Duration(seconds: 8));
       final negocios = respuestas[0];
       final filas = respuestas[1];
 
@@ -150,6 +151,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final guardado = await AlmacenLocal.leerClientes();
       final cola = await AlmacenLocal.colaPendiente();
       await AlmacenLocal.refrescarConteo();
+
       if (!mounted) return;
 
       if (guardado != null) {
@@ -505,7 +507,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   if (cuantos == 0) return const SizedBox.shrink();
                   return Padding(
                     padding: const EdgeInsets.only(left: 8),
-                    child: Container(
+                    // Tocable a proposito: el vendedor no tiene por que saber
+                    // que hay que deslizar para recargar. Si ve que algo
+                    // quedo colgando, lo toca y se intenta de nuevo.
+                    child: GestureDetector(
+                      onTap: _reintentarEnvio,
+                      child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 9,
                         vertical: 4,
@@ -537,6 +544,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ],
                       ),
+                      ),
                     ),
                   );
                 },
@@ -546,6 +554,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
+
+  /// Intenta mandar lo que quedo pendiente, sin recargar toda la pantalla.
+  Future<void> _reintentarEnvio() async {
+    final mensajero = ScaffoldMessenger.of(context);
+    mensajero.showSnackBar(
+      const SnackBar(
+        content: Text('Enviando movimientos pendientes...'),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    final enviados = await AlmacenLocal.sincronizar();
+    if (!mounted) return;
+
+    if (enviados > 0) {
+      await _cargar();
+      if (!mounted) return;
+      mensajero.showSnackBar(
+        SnackBar(
+          content: Text(
+            enviados == 1
+                ? 'Se envió 1 movimiento'
+                : 'Se enviaron $enviados movimientos',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      mensajero.showSnackBar(
+        const SnackBar(
+          content: Text('Todavía no hay señal. Se intentará más tarde.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Widget _cuerpo() {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -146,10 +148,15 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
     try {
       // Pedimos que nos devuelva la fila insertada: si viene vacia, la base no
       // guardo nada y hay que enterarse aqui, no descubrirlo mirando la lista.
+      // Limite de espera corto a proposito. Sin el, la app se queda esperando
+      // el tiempo que traiga el navegador por defecto, que puede ser cerca de
+      // un minuto. El vendedor tiene al cliente enfrente: vale mas rendirse en
+      // ocho segundos y guardar el fiado en el telefono que parecer colgada.
       final guardadas = await supabase
           .from('transacciones')
           .insert(movimiento)
-          .select();
+          .select()
+          .timeout(const Duration(seconds: 8));
 
       if (guardadas.isEmpty) {
         throw StateError('La base no devolvio la fila insertada.');

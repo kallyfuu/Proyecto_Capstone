@@ -171,15 +171,32 @@ class _LoginScreenState extends State<LoginScreen> {
     if (m.contains('email not confirmed')) {
       return 'Aún no confirmas tu correo. Revisa tu bandeja de entrada.';
     }
-    if (m.contains('invalid login')) {
+    if (m.contains('invalid login') ||
+        m.contains('invalid credentials') ||
+        m.contains('invalid_credentials')) {
       return 'Correo o contraseña incorrectos.';
     }
     if (m.contains('already registered') || m.contains('already been')) {
       return 'Ese correo ya tiene una cuenta. Inicia sesión.';
     }
-    if (m.contains('password')) {
+    // Solo cuando el error habla DEL LARGO de la contraseña.
+    //
+    // Antes esta regla atrapaba cualquier mensaje que dijera "password" y lo
+    // traducia a "muy corta". Eso no solo mentia: tapaba el error de verdad,
+    // asi que el problema quedaba invisible.
+    if (m.contains('at least') ||
+        m.contains('too short') ||
+        m.contains('6 characters')) {
       return 'La contraseña debe tener al menos 6 caracteres.';
     }
+    if (m.contains('rate limit') || m.contains('too many')) {
+      return 'Demasiados intentos seguidos. Espera un momento.';
+    }
+    if (m.contains('user not found')) {
+      return 'No existe una cuenta con ese correo.';
+    }
+    // Lo que no sabemos traducir se muestra tal cual. Un mensaje raro en
+    // ingles es incomodo, pero se puede diagnosticar; uno traducido mal, no.
     return mensaje;
   }
 
