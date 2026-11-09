@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
+import 'services/almacen_local.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'theme/app_theme.dart';
@@ -17,6 +18,9 @@ Future<void> main() async {
 
   // Recupera el modo de tema que el usuario eligio la ultima vez.
   await ModoTema.cargar();
+
+  // Deja el contador de pendientes al dia apenas abre la app.
+  await AlmacenLocal.refrescarConteo();
 
   runApp(const FiadoApp());
 }

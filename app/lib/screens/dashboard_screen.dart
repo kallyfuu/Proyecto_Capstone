@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/cliente_saldo.dart';
+import '../services/almacen_local.dart';
 import '../widgets/esqueleto_clientes.dart';
 import '../theme/app_theme.dart';
 import '../theme/modo_tema.dart';
@@ -40,6 +41,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _clientesVisibles = 15;
   bool _cargando = true;
   String? _error;
+  bool _sinConexion = false;
+  DateTime? _fechaCache;
 
   @override
   void initState() {
@@ -83,9 +86,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
         filaNegocio: fila,
       );
 
+      // La ultima vista buena queda guardada para cuando no haya señal.
+      await AlmacenLocal.guardarClientes(
+        List<Map<String, dynamic>>.from(filas),
+        nombreBase,
+      );
+      // Si volvio la señal, se empuja lo que haya quedado pendiente.
+      final enviados = await AlmacenLocal.sincronizar();
+
       if (!mounted) return;
 
+      if (enviados > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              enviados == 1
+                  ? 'Se envió 1 movimiento que estaba pendiente'
+                  : 'Se enviaron $enviados movimientos pendientes',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+
       setState(() {
+        _sinConexion = false;
+        _fechaCache = null;
         _clientes = filas.map(ClienteSaldo.desdeMapa).toList();
         _dueno = (datosPerfil?.nombreDueno.isNotEmpty ?? false)
             ? datosPerfil!.nombreDueno
@@ -118,12 +144,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
       }
     } catch (e) {
+      // Sin señal no se muestra una pantalla de error: se muestra lo ultimo
+      // que se vio, diciendo claramente de cuando es. Un vendedor atendiendo
+      // prefiere un dato de hace dos horas que una pantalla en blanco.
+      final guardado = await AlmacenLocal.leerClientes();
+      final cola = await AlmacenLocal.colaPendiente();
+      await AlmacenLocal.refrescarConteo();
       if (!mounted) return;
+
+      if (guardado != null) {
+        final ajustados = aplicarPendientes(guardado.clientes, cola)
+            .map(ClienteSaldo.desdeMapa)
+            .toList();
+        ajustados.sort((a, b) => a.saldo.compareTo(b.saldo));
+
+        setState(() {
+          _clientes = ajustados;
+          _negocio = guardado.negocio;
+          _sinConexion = true;
+          _fechaCache = guardado.fecha;
+          _error = null;
+          _cargando = false;
+        });
+        return;
+      }
+
       setState(() {
         _error = '$e';
         _cargando = false;
       });
     }
+  }
+
+  /// Hace cuanto se guardo la copia que se esta mostrando.
+  String get _antiguedadCache {
+    final fecha = _fechaCache;
+    if (fecha == null) return 'datos guardados';
+
+    final minutos = DateTime.now().difference(fecha).inMinutes;
+    if (minutos < 1) return 'recién';
+    if (minutos < 60) return 'hace $minutos min';
+
+    final horas = minutos ~/ 60;
+    if (horas < 24) return 'hace $horas ${horas == 1 ? "hora" : "horas"}';
+
+    final dias = horas ~/ 24;
+    return 'hace $dias ${dias == 1 ? "día" : "días"}';
   }
 
   /// Abre la ventana para ver o actualizar los datos del dueño y del negocio.
@@ -260,7 +326,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _encabezado() {
-    final conectado = _error == null;
+    final conectado = _error == null && !_sinConexion;
     final colorEstado = conectado
         ? AppTheme.cumplidorDe(context)
         : AppTheme.morosoDe(context);
@@ -344,7 +410,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         case 'clientes':
                           _mostrarListaClientes();
                         case 'salir':
-                          _supabase.auth.signOut();
+                          AlmacenLocal.limpiar().then(
+                            (_) => _supabase.auth.signOut(),
+                          );
                         case 'sistema':
                           ModoTema.elegir(ThemeMode.system);
                         case 'claro':
@@ -416,7 +484,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      conectado ? 'En línea' : 'Sin conexión',
+                      conectado
+                          ? 'En línea'
+                          : 'Sin conexión · $_antiguedadCache',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -425,6 +495,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
+              ),
+              // Lo que falta enviar tiene que estar a la vista: es plata que
+              // todavia no esta registrada en ninguna parte salvo este
+              // telefono.
+              ValueListenableBuilder<int>(
+                valueListenable: AlmacenLocal.pendientes,
+                builder: (context, cuantos, _) {
+                  if (cuantos == 0) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.atrasadoDe(
+                          context,
+                        ).withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.cloud_upload_outlined,
+                            size: 12,
+                            color: AppTheme.atrasadoDe(context),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            cuantos == 1
+                                ? '1 sin enviar'
+                                : '$cuantos sin enviar',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.atrasadoDe(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
