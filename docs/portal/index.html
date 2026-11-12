@@ -4,31 +4,53 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
+<!-- Pinta tambien la barra del navegador. Sin esto, el cliente abre el
+     llavero y ve una franja blanca sobre una pagina oscura. -->
+<meta name="theme-color" content="#0f1218">
 <title>Mi cuenta</title>
+<!-- display=swap: el texto aparece de inmediato con la fuente del sistema y
+     cambia cuando llega la nuestra. Sin eso, el cliente miraria una pantalla
+     en blanco esperando una tipografia, que es lo contrario de lo que esta
+     pagina promete. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
 <style>
+  /* Misma identidad que la aplicacion del vendedor: menta de acento, coral
+     para la deuda. Que el cliente reconozca que es el mismo producto. */
+  /* Estos valores son los mismos de AppTheme en la app del vendedor
+     (fondoOscuro, superficieOscura, azulSobreOscuro, morosoOscuro...). Si se
+     tocan alla, hay que tocarlos aca o el cliente deja de reconocer que es el
+     mismo producto. */
   :root {
-    --azul: #1b3b6f;
-    --azul2: #2e5eaa;
-    --verde: #1e8e3e;
-    --rojo: #c5271d;
-    --fondo: #f5f6f9;
-    --blanco: #fff;
-    --texto: #151a24;
-    --tenue: #5f6368;
-    --linea: #e2e6ee;
+    /* Le avisa al navegador que la pagina es oscura, para que las barras de
+       desplazamiento y los controles nativos no salgan claros encima. */
+    color-scheme: dark;
+    --fondo: #0f1218;
+    --blanco: #181e29;
+    --texto: #ffffff;
+    --tenue: #94a3b8;
+    --linea: #263042;
+    --azul: #10b981;
+    --azul2: #00f59b;
+    --verde: #10b981;
+    --rojo: #ef4444;
+    --sobre-acento: #04140e;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --fondo: #0e1218; --blanco: #161b24; --texto: #e9edf4;
-      --tenue: #a5aebe; --linea: #29313f;
-      --azul: #8fb3e6; --azul2: #6f9adb;
-      --verde: #5cc47a; --rojo: #f07168;
-    }
-  }
+  /* Antes el portal seguia el tema del telefono del cliente. Se dejo fijo en
+     oscuro para que se vea igual a la app venga de donde venga, que es lo que
+     hace que el cliente lo reconozca como el mismo producto al abrirlo desde
+     el llavero.
+
+     El costo conocido: una pantalla oscura se lee peor bajo sol directo, y un
+     cliente revisando su fiado en la calle es un caso real. Si eso pesa mas
+     que la identidad visual, volver a envolver estos valores en un
+     @media (prefers-color-scheme: dark) y reponer la paleta clara. */
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--fondo); color: var(--texto);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI",
+      Roboto, sans-serif;
     font-size: 17px; line-height: 1.5;
     -webkit-text-size-adjust: 100%;
   }
@@ -41,10 +63,11 @@
   .marca svg { flex: none; }
 
   .resumen {
-    background: linear-gradient(135deg, var(--azul), var(--azul2));
-    color: #fff; border-radius: 18px; padding: 1.6rem 1.4rem;
+    background: linear-gradient(135deg, var(--azul2), var(--azul));
+    color: var(--sobre-acento); border-radius: 20px; padding: 1.6rem 1.4rem;
   }
-  .resumen .quien { font-size: .9rem; opacity: .85; }
+  .resumen { color: var(--sobre-acento); }
+  .resumen .quien { font-size: .9rem; opacity: .8; }
   .resumen .nombre { font-size: 1.35rem; font-weight: 700; margin: .1rem 0 1rem; }
   .resumen .etiqueta { font-size: .85rem; opacity: .85; }
   .resumen .monto {
@@ -61,7 +84,7 @@
 
   .mov {
     background: var(--blanco); border: 1px solid var(--linea);
-    border-radius: 12px; padding: .85rem .95rem; margin-bottom: .55rem;
+    border-radius: 16px; padding: .85rem .95rem; margin-bottom: .55rem;
     display: flex; align-items: center; gap: .9rem;
   }
   .mov .txt { flex: 1; min-width: 0; }
@@ -79,7 +102,7 @@
 
   .aviso {
     background: var(--blanco); border: 1px solid var(--linea);
-    border-radius: 16px; padding: 2.2rem 1.4rem; text-align: center;
+    border-radius: 20px; padding: 2.2rem 1.4rem; text-align: center;
     margin-top: 2rem;
   }
   .aviso .icono { font-size: 2.6rem; line-height: 1; }

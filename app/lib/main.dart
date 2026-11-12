@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
+import 'services/almacen_local.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'theme/app_theme.dart';
@@ -13,10 +14,24 @@ Future<void> main() async {
   await Supabase.initialize(
     url: SupabaseConfig.url,
     publishableKey: SupabaseConfig.anonKey,
+    // El navegador guardaba las respuestas y devolvia saldos viejos: despues
+    // de enviar un movimiento pendiente, la lista seguia mostrando el saldo
+    // anterior aunque la base ya tuviera el nuevo.
+    //
+    // En una app de plata eso es grave: el vendedor ve un numero que no es el
+    // que tiene el servidor. Pedimos explicitamente que cada consulta vaya al
+    // servidor en vez de salir de la memoria del navegador.
+    headers: const {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+    },
   );
 
   // Recupera el modo de tema que el usuario eligio la ultima vez.
   await ModoTema.cargar();
+
+  // Deja el contador de pendientes al dia apenas abre la app.
+  await AlmacenLocal.refrescarConteo();
 
   runApp(const FiadoApp());
 }

@@ -1,14 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Hablar con Supabase. Va aqui y no solo en debug/: la plantilla de
+         Flutter declara INTERNET unicamente en los manifiestos de debug y
+         profile, asi que sin esta linea el APK de release se instala bien
+         pero Android le niega la red, y el login falla con
+         "Failed host lookup". -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <!-- Lectura del llavero NFC del cliente. -->
     <uses-permission android:name="android.permission.NFC"/>
 
     <!-- required="false" a proposito: la app tiene que poder instalarse en un
-         celular sin NFC. Ese almacenero pierde el llavero pero sigue pudiendo
+         celular sin NFC. Ese vendedor pierde el llavero pero sigue pudiendo
          buscar al cliente por nombre y registrarle fiados. -->
     <uses-feature android:name="android.hardware.nfc" android:required="false"/>
 
     <application
-        android:label="fiado_nfc"
+        android:label="Fiado Inteligente"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

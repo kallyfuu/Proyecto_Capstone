@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -6,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import 'historial_movimientos_screen.dart';
 
 import '../models/cliente_saldo.dart';
+import '../services/almacen_local.dart';
 import '../services/lector_nfc.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
@@ -120,14 +123,13 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
       _error = null;
     });
 
-    try {
-      final supabase = Supabase.instance.client;
-      final negocioId = supabase.auth.currentUser!.id;
-      final boleta = _boletaCtrl.text.trim();
+    final supabase = Supabase.instance.client;
+    final negocioId = supabase.auth.currentUser!.id;
+    final boleta = _boletaCtrl.text.trim();
 
-      // Pedimos que nos devuelva la fila insertada: si viene vacia, la base no
-      // guardo nada y hay que enterarse aqui, no descubrirlo mirando la lista.
-      final guardadas = await supabase.from('transacciones').insert({
+    // El movimiento se arma antes de intentar enviarlo, porque si no hay señal
+    // hay que poder encolarlo tal cual, sin rehacerlo.
+    final movimiento = <String, dynamic>{
         // El id lo genera la app, no la base. Asi un reintento despues de
         // perder señal manda el MISMO id y no duplica el movimiento.
         'id': const Uuid().v4(),
@@ -140,17 +142,47 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
             : _conceptoCtrl.text.trim(),
         'numero_boleta': boleta.isEmpty ? null : boleta,
         'es_offline': false,
-        'fecha_local': DateTime.now().toUtc().toIso8601String(),
-      }).select();
+      'fecha_local': DateTime.now().toUtc().toIso8601String(),
+    };
+
+    try {
+      // Pedimos que nos devuelva la fila insertada: si viene vacia, la base no
+      // guardo nada y hay que enterarse aqui, no descubrirlo mirando la lista.
+      // Limite de espera corto a proposito. Sin el, la app se queda esperando
+      // el tiempo que traiga el navegador por defecto, que puede ser cerca de
+      // un minuto. El vendedor tiene al cliente enfrente: vale mas rendirse en
+      // ocho segundos y guardar el fiado en el telefono que parecer colgada.
+      final guardadas = await supabase
+          .from('transacciones')
+          .insert(movimiento)
+          .select()
+          .timeout(const Duration(seconds: 8));
 
       if (guardadas.isEmpty) {
         throw StateError('La base no devolvio la fila insertada.');
       }
 
+      // Llego bien: aprovechamos de empujar lo que haya quedado pendiente de
+      // antes. Si hay señal ahora, la hay para todos.
+      await AlmacenLocal.sincronizar();
+
       // Confirmacion de que la plata quedo registrada, sin tener que leer.
       await HapticFeedback.mediumImpact();
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
+      // Sin señal no se pierde el movimiento: queda guardado en el telefono y
+      // se envia solo cuando vuelva. Para el vendedor la operacion termino,
+      // porque el fiado ya esta anotado; lo que falta es cosa de la app.
+      //
+      // Se marca es_offline para poder distinguir despues cuales se
+      // registraron sin conexion.
+      if (_esFallaDeRed(e)) {
+        await AlmacenLocal.encolar({...movimiento, 'es_offline': true});
+        await HapticFeedback.mediumImpact();
+        if (mounted) Navigator.of(context).pop(true);
+        return;
+      }
+
       setState(() {
         _guardando = false;
         _error = 'No se pudo guardar: $e';
@@ -251,6 +283,22 @@ class _RegistrarMovimientoSheetState extends State<RegistrarMovimientoSheet> {
         _error = 'No se pudo desvincular: $e';
       });
     }
+  }
+
+  /// Distingue quedarse sin señal de un error de verdad.
+  ///
+  /// Importa: si la base rechazo el movimiento por un dato malo, encolarlo
+  /// seria esconder el problema y reintentarlo para siempre. Solo se encola
+  /// cuando el mensaje habla de red o de tiempo agotado.
+  bool _esFallaDeRed(Object error) {
+    final texto = '$error'.toLowerCase();
+    return texto.contains('socket') ||
+        texto.contains('network') ||
+        texto.contains('failed host lookup') ||
+        texto.contains('connection') ||
+        texto.contains('timeout') ||
+        texto.contains('clientexception') ||
+        texto.contains('xmlhttprequest');
   }
 
   /// Mismo criterio que en nuevo_cliente_sheet.dart: el codigo 23505 es

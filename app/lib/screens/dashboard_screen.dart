@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/cliente_saldo.dart';
+import '../services/almacen_local.dart';
 import '../widgets/esqueleto_clientes.dart';
 import '../theme/app_theme.dart';
 import '../theme/modo_tema.dart';
@@ -35,8 +38,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _dueno;
   bool _verificoBienvenida = false;
   List<ClienteSaldo> _clientes = const [];
+  String _busqueda = '';
+  String? _filtroEstado;
+  int _clientesVisibles = 15;
   bool _cargando = true;
   String? _error;
+  bool _sinConexion = false;
+  DateTime? _fechaCache;
 
   @override
   void initState() {
@@ -66,7 +74,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .from('v_clientes_saldo')
             .select()
             .order('saldo', ascending: true),
-      ]);
+      ]).timeout(const Duration(seconds: 8));
       final negocios = respuestas[0];
       final filas = respuestas[1];
 
@@ -80,10 +88,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
         filaNegocio: fila,
       );
 
+      // Si volvio la señal, se empuja lo que haya quedado pendiente.
+      final enviados = await AlmacenLocal.sincronizar();
+
+      // Los saldos de arriba se leyeron ANTES de enviar la cola, asi que no
+      // alcanzan a incluir lo que recien se subio. Si se envio algo hay que
+      // volver a preguntar: si no, el saldo retrocede justo despues de
+      // sincronizar, que es el momento en que mas se confia en el numero.
+      final saldos = enviados > 0
+          ? await _supabase
+                .from('v_clientes_saldo')
+                .select()
+                .order('saldo', ascending: true)
+                .timeout(const Duration(seconds: 8))
+          : filas;
+
+      // La ultima vista buena queda guardada para cuando no haya señal.
+      await AlmacenLocal.guardarClientes(
+        List<Map<String, dynamic>>.from(saldos),
+        nombreBase,
+      );
+
       if (!mounted) return;
 
+      if (enviados > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              enviados == 1
+                  ? 'Se envió 1 movimiento que estaba pendiente'
+                  : 'Se enviaron $enviados movimientos pendientes',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+
       setState(() {
-        _clientes = filas.map(ClienteSaldo.desdeMapa).toList();
+        _sinConexion = false;
+        _fechaCache = null;
+        _clientes = saldos.map(ClienteSaldo.desdeMapa).toList();
         _dueno = (datosPerfil?.nombreDueno.isNotEmpty ?? false)
             ? datosPerfil!.nombreDueno
             : null;
@@ -115,12 +159,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
       }
     } catch (e) {
+      // Sin señal no se muestra una pantalla de error: se muestra lo ultimo
+      // que se vio, diciendo claramente de cuando es. Un vendedor atendiendo
+      // prefiere un dato de hace dos horas que una pantalla en blanco.
+      final guardado = await AlmacenLocal.leerClientes();
+      final cola = await AlmacenLocal.colaPendiente();
+      await AlmacenLocal.refrescarConteo();
+
       if (!mounted) return;
+
+      if (guardado != null) {
+        final ajustados = aplicarPendientes(
+          guardado.clientes,
+          cola,
+        ).map(ClienteSaldo.desdeMapa).toList();
+        ajustados.sort((a, b) => a.saldo.compareTo(b.saldo));
+
+        setState(() {
+          _clientes = ajustados;
+          _negocio = guardado.negocio;
+          _sinConexion = true;
+          _fechaCache = guardado.fecha;
+          _error = null;
+          _cargando = false;
+        });
+        return;
+      }
+
       setState(() {
         _error = '$e';
         _cargando = false;
       });
     }
+  }
+
+  /// Hace cuanto se guardo la copia que se esta mostrando.
+  String get _antiguedadCache {
+    final fecha = _fechaCache;
+    if (fecha == null) return 'datos guardados';
+
+    final minutos = DateTime.now().difference(fecha).inMinutes;
+    if (minutos < 1) return 'recién';
+    if (minutos < 60) return 'hace $minutos min';
+
+    final horas = minutos ~/ 60;
+    if (horas < 24) return 'hace $horas ${horas == 1 ? "hora" : "horas"}';
+
+    final dias = horas ~/ 24;
+    return 'hace $dias ${dias == 1 ? "día" : "días"}';
   }
 
   /// Abre la ventana para ver o actualizar los datos del dueño y del negocio.
@@ -257,7 +343,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _encabezado() {
-    final conectado = _error == null;
+    final conectado = _error == null && !_sinConexion;
     final colorEstado = conectado
         ? AppTheme.cumplidorDe(context)
         : AppTheme.morosoDe(context);
@@ -341,7 +427,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         case 'clientes':
                           _mostrarListaClientes();
                         case 'salir':
-                          _supabase.auth.signOut();
+                          AlmacenLocal.limpiar().then(
+                            (_) => _supabase.auth.signOut(),
+                          );
                         case 'sistema':
                           ModoTema.elegir(ThemeMode.system);
                         case 'claro':
@@ -413,7 +501,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      conectado ? 'En línea' : 'Sin conexión',
+                      conectado
+                          ? 'En línea'
+                          : 'Sin conexión · $_antiguedadCache',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -423,11 +513,98 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
               ),
+              // Lo que falta enviar tiene que estar a la vista: es plata que
+              // todavia no esta registrada en ninguna parte salvo este
+              // telefono.
+              ValueListenableBuilder<int>(
+                valueListenable: AlmacenLocal.pendientes,
+                builder: (context, cuantos, _) {
+                  if (cuantos == 0) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    // Tocable a proposito: el vendedor no tiene por que saber
+                    // que hay que deslizar para recargar. Si ve que algo
+                    // quedo colgando, lo toca y se intenta de nuevo.
+                    child: GestureDetector(
+                      onTap: _reintentarEnvio,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.atrasadoDe(context)
+                              .withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.cloud_upload_outlined,
+                              size: 12,
+                              color: AppTheme.atrasadoDe(context),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              cuantos == 1
+                                  ? '1 sin enviar'
+                                  : '$cuantos sin enviar',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.atrasadoDe(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  /// Intenta mandar lo que quedo pendiente, sin recargar toda la pantalla.
+  Future<void> _reintentarEnvio() async {
+    final mensajero = ScaffoldMessenger.of(context);
+    mensajero.showSnackBar(
+      const SnackBar(
+        content: Text('Enviando movimientos pendientes...'),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    final enviados = await AlmacenLocal.sincronizar();
+    if (!mounted) return;
+
+    if (enviados > 0) {
+      await _cargar();
+      if (!mounted) return;
+      mensajero.showSnackBar(
+        SnackBar(
+          content: Text(
+            enviados == 1
+                ? 'Se envió 1 movimiento'
+                : 'Se enviaron $enviados movimientos',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      mensajero.showSnackBar(
+        const SnackBar(
+          content: Text('Todavía no hay señal. Se intentará más tarde.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Widget _cuerpo() {
@@ -450,43 +627,115 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final cuantosDeben = _clientes.where((c) => c.debe).length;
     final totalClientes = _clientes.length;
 
+    // El circulo del NFC sigue siendo el protagonista, pero deja ver el
+    // principio de la lista. Si ocupa toda la pantalla, el vendedor no sabe
+    // quien le debe sin tocar nada, que es justo lo que la app vino a
+    // resolver.
+    final busqueda = normalizar(_busqueda);
+    final clientesFiltrados = _clientes.where((cliente) {
+      if (!normalizar(cliente.nombre).contains(busqueda)) return false;
+      if (_filtroEstado == null) return true;
+      return (cliente.estadoRiesgo ?? 'Cumplidor') == _filtroEstado;
+    }).toList();
+    final clientesVisibles = clientesFiltrados.take(_clientesVisibles).toList();
+    final animarEntrada = busqueda.isEmpty && _filtroEstado == null;
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        final anchoMax = constraints.maxWidth * 0.80;
-        final altoMax = (constraints.maxHeight - 160) * 0.78;
+        final anchoMax = constraints.maxWidth * 0.62;
+        final altoMax = constraints.maxHeight * 0.30;
         final menor = anchoMax < altoMax ? anchoMax : altoMax;
-        final diametro = menor.clamp(220.0, 320.0).toDouble();
+        final diametro = menor.clamp(170.0, 230.0).toDouble();
 
-        return Column(
-          children: [
-            Expanded(
-              child: Center(
-                child: RepaintBoundary(
-                  child: SizedBox(
-                    width: diametro * 1.08,
-                    height: diametro * 1.08,
-                    child: Center(
-                      child: _botonCircularNfc(diametro)
-                          .animate(onPlay: (c) => c.repeat(reverse: true))
-                          .scale(
-                            begin: const Offset(1, 1),
-                            end: const Offset(1.035, 1.035),
-                            duration: 1600.ms,
-                            curve: Curves.easeInOut,
-                          ),
-                    ),
+        return RefreshIndicator(
+          onRefresh: _cargar,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
+            children: [
+              // RepaintBoundary aisla el pulso en su propia capa: sin el, cada
+              // cuadro de la respiracion repinta toda la lista de abajo.
+              RepaintBoundary(
+                child: SizedBox(
+                  height: diametro * 1.08,
+                  child: Center(
+                    child: _botonCircularNfc(diametro)
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .scale(
+                          begin: const Offset(1, 1),
+                          end: const Offset(1.035, 1.035),
+                          duration: 1600.ms,
+                          curve: Curves.easeInOut,
+                        ),
                   ),
                 ),
               ),
-            ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-                child: _tarjetaResumen(totalFiado, cuantosDeben, totalClientes),
-              ),
-            ),
-          ],
+              const SizedBox(height: 18),
+              _tarjetaResumen(totalFiado, cuantosDeben, totalClientes),
+              if (_clientes.isEmpty)
+                _mensajeCentrado(
+                  icono: Icons.people_outline,
+                  color: AppTheme.textoTenueDe(context),
+                  titulo: 'Todavía no hay clientes',
+                  detalle: 'Agrega el primero y podrás empezar a registrarle fiados.',
+                  accion: FilledButton.icon(
+                    onPressed: _nuevoCliente,
+                    icon: const Icon(Icons.person_add_alt),
+                    label: const Text('Agregar cliente'),
+                  ),
+                )
+              else ...[
+                const SizedBox(height: 18),
+                TextField(
+                  onChanged: (v) => setState(() {
+                    _busqueda = v;
+                    _clientesVisibles = 15;
+                  }),
+                  decoration: const InputDecoration(
+                    hintText: 'Buscar cliente por nombre',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _chipsDeEstado(
+                  filtroActivo: _filtroEstado,
+                  onCambiarFiltro: (nuevo) => setState(() {
+                    _filtroEstado = nuevo;
+                    _clientesVisibles = 15;
+                  }),
+                ),
+                const SizedBox(height: 16),
+                if (clientesFiltrados.isEmpty)
+                  _mensajeListaVacia()
+                else ...[
+                  for (final (i, cliente) in clientesVisibles.indexed)
+                    if (animarEntrada)
+                      _filaCliente(cliente)
+                          .animate()
+                          .fadeIn(delay: (50 * i).ms, duration: 260.ms)
+                          .slideY(
+                            begin: 0.12,
+                            end: 0,
+                            delay: (50 * i).ms,
+                            duration: 260.ms,
+                            curve: Curves.easeOutCubic,
+                          )
+                    else
+                      _filaCliente(cliente),
+                  if (clientesVisibles.length < clientesFiltrados.length)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: OutlinedButton.icon(
+                        onPressed: () =>
+                            setState(() => _clientesVisibles += 15),
+                        icon: const Icon(Icons.expand_more),
+                        label: const Text('Cargar más'),
+                      ),
+                    ),
+                ],
+              ],
+            ],
+          ),
         );
       },
     );
@@ -753,7 +1002,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           builder: (context, setSheetState) {
             final busquedaNorm = normalizar(busquedaModal);
             final clientesFiltrados = _clientes.where((cliente) {
-              if (!normalizar(cliente.nombre).contains(busquedaNorm)) return false;
+              if (!normalizar(cliente.nombre).contains(busquedaNorm)) {
+                return false;
+              }
               if (filtroEstadoModal == null) return true;
               return (cliente.estadoRiesgo ?? 'Cumplidor') == filtroEstadoModal;
             }).toList();

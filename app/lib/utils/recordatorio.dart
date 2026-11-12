@@ -4,6 +4,14 @@ import 'formato.dart';
 /// Dirección pública del portal del cliente.
 const String urlPortal = 'https://kallyfuu.github.io/Proyecto_Capstone/portal';
 
+/// Enlace al estado de cuenta de un cliente.
+///
+/// Un solo lugar arma esta dirección porque ahora se usa en dos partes: el
+/// mensaje de WhatsApp y el enlace que se graba dentro del llavero NFC. Si
+/// cada una la armara por su cuenta, podrían terminar apuntando a páginas
+/// distintas sin que nadie se entere.
+String enlacePortal(String token) => '$urlPortal/?token=$token';
+
 /// Deja el teléfono en el formato que espera WhatsApp: solo dígitos, con el
 /// código de país adelante.
 ///
@@ -33,7 +41,7 @@ String? telefonoParaWhatsApp(String? telefono) {
 /// en vez de tener que creerle al mensaje.
 String mensajeRecordatorio(ClienteSaldo cliente, String negocio, String token) {
   final saldo = cliente.saldo.abs();
-  final enlace = '$urlPortal/?token=$token';
+  final enlace = enlacePortal(token);
 
   if (!cliente.debe) {
     return 'Hola ${cliente.nombre}, le escribimos de $negocio. '
