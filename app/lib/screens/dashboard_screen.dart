@@ -1002,8 +1002,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           builder: (context, setSheetState) {
             final busquedaNorm = normalizar(busquedaModal);
             final clientesFiltrados = _clientes.where((cliente) {
-              if (!normalizar(cliente.nombre).contains(busquedaNorm))
+              if (!normalizar(cliente.nombre).contains(busquedaNorm)) {
                 return false;
+              }
               if (filtroEstadoModal == null) return true;
               return (cliente.estadoRiesgo ?? 'Cumplidor') == filtroEstadoModal;
             }).toList();

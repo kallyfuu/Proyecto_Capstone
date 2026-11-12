@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
+<!-- Pinta tambien la barra del navegador. Sin esto, el cliente abre el
+     llavero y ve una franja blanca sobre una pagina oscura. -->
+<meta name="theme-color" content="#0f1218">
 <title>Mi cuenta</title>
 <!-- display=swap: el texto aparece de inmediato con la fuente del sistema y
      cambia cuando llega la nuestra. Sin eso, el cliente miraria una pantalla
@@ -15,30 +18,34 @@
 <style>
   /* Misma identidad que la aplicacion del vendedor: menta de acento, coral
      para la deuda. Que el cliente reconozca que es el mismo producto. */
+  /* Estos valores son los mismos de AppTheme en la app del vendedor
+     (fondoOscuro, superficieOscura, azulSobreOscuro, morosoOscuro...). Si se
+     tocan alla, hay que tocarlos aca o el cliente deja de reconocer que es el
+     mismo producto. */
   :root {
-    --azul: #059669;
-    --azul2: #00d084;
-    --verde: #059669;
-    --rojo: #e11d48;
-    --fondo: #f8fafc;
-    --blanco: #fff;
-    --texto: #0f172a;
-    --tenue: #64748b;
-    --linea: #e2e8f0;
-    --sobre-acento: #0f172a;
+    /* Le avisa al navegador que la pagina es oscura, para que las barras de
+       desplazamiento y los controles nativos no salgan claros encima. */
+    color-scheme: dark;
+    --fondo: #0f1218;
+    --blanco: #181e29;
+    --texto: #ffffff;
+    --tenue: #94a3b8;
+    --linea: #263042;
+    --azul: #10b981;
+    --azul2: #00f59b;
+    --verde: #10b981;
+    --rojo: #ef4444;
+    --sobre-acento: #04140e;
   }
-  /* El portal sigue el tema del telefono del cliente, no el de la app. Un
-     cliente mirando su deuda al sol no quiere una pantalla negra, y uno
-     mirandola de noche no quiere una blanca. */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --fondo: #0f1218; --blanco: #181e29; --texto: #ffffff;
-      --tenue: #94a3b8; --linea: #263042;
-      --azul: #10b981; --azul2: #00f59b;
-      --verde: #10b981; --rojo: #ef4444;
-      --sobre-acento: #04140e;
-    }
-  }
+  /* Antes el portal seguia el tema del telefono del cliente. Se dejo fijo en
+     oscuro para que se vea igual a la app venga de donde venga, que es lo que
+     hace que el cliente lo reconozca como el mismo producto al abrirlo desde
+     el llavero.
+
+     El costo conocido: una pantalla oscura se lee peor bajo sol directo, y un
+     cliente revisando su fiado en la calle es un caso real. Si eso pesa mas
+     que la identidad visual, volver a envolver estos valores en un
+     @media (prefers-color-scheme: dark) y reponer la paleta clara. */
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--fondo); color: var(--texto);

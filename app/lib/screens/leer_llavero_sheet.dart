@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/cliente_saldo.dart';
+import '../services/escritor_nfc.dart';
 import '../services/lector_nfc.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
+import '../utils/recordatorio.dart';
 import '../utils/texto.dart';
 import 'registrar_movimiento_sheet.dart';
 
@@ -243,6 +245,107 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
             : 'No se pudo asociar el llavero: $errorStr';
       });
     }
+  }
+
+  /// Graba el enlace del portal dentro del llavero del cliente.
+  ///
+  /// Pide un segundo toque a proposito: el primero fue para leer el UID, y
+  /// para entonces el vendedor ya separo el llavero del telefono.
+  Future<void> _grabarEnlaceEnLlavero() async {
+    final cliente = _clienteEncontrado;
+    if (cliente == null) return;
+
+    final token = cliente.tokenPortal;
+    if (token == null) {
+      _avisar(
+        'Este cliente todavía no tiene portal habilitado, '
+        'así que no hay enlace que grabar.',
+      );
+      return;
+    }
+
+    // El dialogo no se cierra tocando fuera: el vendedor tiene que acercar el
+    // llavero, y un cierre accidental dejaria el lector encendido.
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 20),
+              Text(
+                'Acerque el llavero de ${cliente.nombre}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Manténgalo apoyado hasta que vibre.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textoTenueDe(ctx),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => EscritorNfc.cancelar(),
+              child: const Text('Cancelar'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final resultado = await EscritorNfc.grabarEnlace(url: enlacePortal(token));
+
+    if (!mounted) return;
+    // Cierra el dialogo de espera. rootNavigator porque el dialogo se monto
+    // por encima de esta hoja, no dentro de ella.
+    Navigator.of(context, rootNavigator: true).pop();
+
+    if (resultado == ResultadoGrabado.cancelado) return;
+    _avisar(_mensajeDe(resultado, cliente.nombre),
+        esError: resultado != ResultadoGrabado.ok);
+  }
+
+  /// Texto que ve el vendedor segun como termino el grabado.
+  ///
+  /// Cada caso dice que hacer. "No se pudo grabar" no le sirve a nadie que
+  /// tiene un cliente esperando en el mostrador.
+  static String _mensajeDe(ResultadoGrabado resultado, String nombre) {
+    return switch (resultado) {
+      ResultadoGrabado.ok =>
+        'Listo. El llavero de $nombre ya abre su estado de cuenta.',
+      ResultadoGrabado.sinLector =>
+        'Encienda el NFC del teléfono para poder grabar el llavero.',
+      ResultadoGrabado.noGrabable =>
+        'Este llavero no acepta grabado. Use otro.',
+      ResultadoGrabado.protegido =>
+        'Este llavero está bloqueado de fábrica y no se puede grabar.',
+      ResultadoGrabado.sinEspacio =>
+        'No queda espacio en el llavero para el enlace.',
+      ResultadoGrabado.tiempoAgotado =>
+        'No se acercó ningún llavero. Inténtelo de nuevo.',
+      ResultadoGrabado.cancelado => '',
+      ResultadoGrabado.error =>
+        'Se interrumpió el grabado. Apoye el llavero sin moverlo y reintente.',
+    };
+  }
+
+  void _avisar(String mensaje, {bool esError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: esError ? AppTheme.morosoDe(context) : null,
+      ),
+    );
   }
 
   void _cerrar() {
@@ -517,6 +620,12 @@ class _LeerLlaveroSheetState extends State<LeerLlaveroSheet> {
               onPressed: _abrirMovimiento,
               icon: const Icon(Icons.payments_outlined),
               label: const Text('Registrar movimiento'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: _grabarEnlaceEnLlavero,
+              icon: const Icon(Icons.link, size: 20),
+              label: const Text('Grabar enlace en el llavero'),
             ),
             const SizedBox(height: 8),
             TextButton(
