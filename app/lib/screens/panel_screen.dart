@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/cliente_saldo.dart';
 import '../models/resumen_negocio.dart';
+import '../services/exportador_libro.dart';
 import '../widgets/esqueleto_clientes.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
@@ -27,6 +28,7 @@ class _PanelScreenState extends State<PanelScreen> {
   bool _cargando = true;
   String? _error;
   int? _mesElegido;
+  bool _exportando = false;
 
   @override
   void initState() {
@@ -133,7 +135,120 @@ class _PanelScreenState extends State<PanelScreen> {
             _tituloSeccion('QUIÉNES DEBEN MÁS'),
             _TopDeudores(resumen: r),
           ],
+          const SizedBox(height: 28),
+          _tituloSeccion('RESPALDO'),
+          _bloqueRespaldo(),
         ],
+      ),
+    );
+  }
+
+  /// Bajar el libro completo a un archivo.
+  ///
+  /// Va al final del panel y no en la pantalla principal a propósito: no es
+  /// algo que el vendedor haga con el cliente enfrente, es algo que hace una
+  /// vez al mes con calma.
+  Widget _bloqueRespaldo() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.bordeDe(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Si pierde el teléfono, no pierde el libro. Baje una copia de '
+            'todos los fiados y abonos para abrirla en Excel.',
+            style: TextStyle(
+              fontSize: 13.5,
+              height: 1.45,
+              color: AppTheme.textoTenueDe(context),
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _exportando ? null : _descargarLibro,
+              icon: _exportando
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.download_outlined, size: 20),
+              label: Text(
+                _exportando ? 'Preparando...' : 'Descargar a este teléfono',
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Compartir no es lo mismo que descargar y por eso sigue aparte:
+          // sacar el libro del telefono es justamente lo que hace que el
+          // vendedor no quede preso de la app.
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _exportando ? null : _compartirLibro,
+              icon: const Icon(Icons.ios_share, size: 18),
+              label: const Text('Enviar por WhatsApp o correo'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Deja el archivo en la carpeta Descargas del teléfono.
+  Future<void> _descargarLibro() async {
+    setState(() => _exportando = true);
+
+    try {
+      final r = await ExportadorLibro.descargar(supabase: _supabase);
+
+      if (!mounted) return;
+      if (!r.huboLibro) {
+        _avisar('Todavía no hay movimientos que respaldar.');
+      } else if (r.guardadoComo != null) {
+        _avisar('Guardado en Descargas: ${r.guardadoComo}');
+      }
+      // Si hubo libro pero no quedó guardado, el sistema no lo permitió y ya
+      // se abrió el menú de compartir: decir "guardado" ahí sería mentirle.
+    } catch (e) {
+      if (!mounted) return;
+      _avisar('No se pudo preparar el respaldo: $e', esError: true);
+    } finally {
+      if (mounted) setState(() => _exportando = false);
+    }
+  }
+
+  Future<void> _compartirLibro() async {
+    setState(() => _exportando = true);
+
+    try {
+      final cuantos = await ExportadorLibro.exportar(supabase: _supabase);
+
+      if (!mounted) return;
+      if (cuantos == null) {
+        _avisar('Todavía no hay movimientos que respaldar.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _avisar('No se pudo preparar el respaldo: $e', esError: true);
+    } finally {
+      if (mounted) setState(() => _exportando = false);
+    }
+  }
+
+  void _avisar(String mensaje, {bool esError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: esError ? AppTheme.morosoDe(context) : null,
       ),
     );
   }
