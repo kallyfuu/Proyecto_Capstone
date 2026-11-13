@@ -109,6 +109,33 @@
   .aviso h1 { font-size: 1.15rem; margin: .9rem 0 .4rem; }
   .aviso p { color: var(--tenue); margin: 0; font-size: .95rem; }
 
+  /* Aviso de privacidad. Va plegado porque el cliente entra a ver cuanto
+     debe, no a leer un texto legal, pero tiene que estar a la vista y ser
+     entendible: la ley obliga a informar, no a esconder la informacion en
+     un documento aparte. */
+  .privacidad {
+    margin-top: 1.6rem; background: var(--blanco);
+    border: 1px solid var(--linea); border-radius: 14px;
+    padding: .2rem .9rem;
+  }
+  .privacidad summary {
+    cursor: pointer; padding: .75rem 0; font-size: .9rem;
+    font-weight: 600; color: var(--texto); list-style: none;
+  }
+  .privacidad summary::-webkit-details-marker { display: none; }
+  .privacidad summary::after {
+    content: '+'; float: right; color: var(--tenue); font-weight: 400;
+  }
+  .privacidad[open] summary::after { content: '−'; }
+  .privacidad p {
+    margin: 0 0 .7rem; font-size: .84rem; line-height: 1.55;
+    color: var(--tenue);
+  }
+  .privacidad strong { color: var(--texto); font-weight: 600; }
+  .privacidad ul {
+    margin: 0 0 .7rem; padding-left: 1.1rem;
+    font-size: .84rem; line-height: 1.55; color: var(--tenue);
+  }
   .pie {
     margin-top: 2.2rem; text-align: center;
     font-size: .78rem; color: var(--tenue); line-height: 1.6;
@@ -219,8 +246,41 @@
     }
 
     caja.innerHTML = encabezado + lista +
+      avisoPrivacidad(datos.negocio) +
       '<div class="pie">Esta cuenta la lleva tu negocio.<br>' +
       'Si ves algo que no calza, conversa con el vendedor.</div>';
+  }
+
+  /* Informacion al titular, en lenguaje que se entienda.
+     La Ley 21.719 obliga a decirle a la persona quien trata sus datos, cuales
+     trata, para que, y como ejercer sus derechos. Se escribe simple a
+     proposito: un aviso que el cliente no entiende no informa a nadie. */
+  function avisoPrivacidad(negocio) {
+    var responsable = escapar(negocio || 'tu negocio');
+    return '' +
+      '<details class="privacidad">' +
+        '<summary>Qué se guarda de ti y qué puedes pedir</summary>' +
+        '<p><strong>Quién lleva tus datos:</strong> ' + responsable + '. ' +
+          'Esta página solo se los muestra a ti.</p>' +
+        '<p><strong>Qué se guarda:</strong> tu nombre, tu teléfono si se lo ' +
+          'diste al vendedor, y los fiados y abonos de tu cuenta. Nada más.</p>' +
+        '<p><strong>Para qué:</strong> únicamente para llevar la cuenta de lo ' +
+          'que compras al fiado en ese negocio. Tus datos no se venden ni se ' +
+          'comparten con terceros.</p>' +
+        '<p><strong>Tu llavero:</strong> no guarda tu nombre ni tu deuda. ' +
+          'Lleva solo un código que abre esta página, y que el negocio puede ' +
+          'anular si lo pierdes.</p>' +
+        '<p><strong>Qué puedes pedirle al negocio:</strong></p>' +
+        '<ul>' +
+          '<li>Ver todo lo que tiene registrado de ti.</li>' +
+          '<li>Corregir algo que esté mal.</li>' +
+          '<li>Que anule tu llavero y este enlace.</li>' +
+          '<li>Que borre tus datos cuando tu cuenta quede saldada.</li>' +
+          '<li>Una copia de tus movimientos.</li>' +
+        '</ul>' +
+        '<p>Pídeselo directamente al vendedor. Estos derechos están en la ' +
+          'Ley 21.719 de protección de datos personales.</p>' +
+      '</details>';
   }
 
   function parametro(nombre) {
