@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" font-family="Segoe UI, Calibri, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="pataGallo" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto">
+      <path d="M 1 1 L 11 6 L 1 11" fill="none" stroke="#64748B" stroke-width="1.6"/>
+    </marker>
+    <marker id="uno" viewBox="0 0 12 12" refX="1" refY="6" markerWidth="11" markerHeight="11" orient="auto">
+      <path d="M 4 1 L 4 11" fill="none" stroke="#64748B" stroke-width="1.8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="720" rx="18" fill="#FFFFFF"/>
+
+  <!-- ====================== negocios ====================== -->
+  <rect x="40" y="70" width="290" height="190" rx="12" fill="#F8FAFC" stroke="#D8DEE6" stroke-width="1.5"/>
+  <rect x="40" y="70" width="290" height="38" rx="12" fill="#0F172A"/>
+  <rect x="40" y="94" width="290" height="14" fill="#0F172A"/>
+  <text x="58" y="96" font-size="16" font-weight="600" fill="#FFFFFF">negocios</text>
+  <text x="58" y="134" font-size="13" fill="#0F172A" font-weight="600">id</text>
+  <text x="90" y="134" font-size="12.5" fill="#64748B">PK · es el id del usuario</text>
+  <text x="58" y="158" font-size="13" fill="#475569">nombre_negocio</text>
+  <text x="58" y="180" font-size="13" fill="#475569">nombre_dueno</text>
+  <text x="58" y="202" font-size="13" fill="#475569">direccion</text>
+  <text x="58" y="224" font-size="13" fill="#475569">correo</text>
+  <text x="58" y="246" font-size="13" fill="#475569">telefono</text>
+
+  <!-- ====================== clientes ====================== -->
+  <rect x="455" y="70" width="330" height="268" rx="12" fill="#F8FAFC" stroke="#D8DEE6" stroke-width="1.5"/>
+  <rect x="455" y="70" width="330" height="38" rx="12" fill="#059669"/>
+  <rect x="455" y="94" width="330" height="14" fill="#059669"/>
+  <text x="473" y="96" font-size="16" font-weight="600" fill="#FFFFFF">clientes</text>
+  <text x="473" y="134" font-size="13" fill="#0F172A" font-weight="600">id</text>
+  <text x="505" y="134" font-size="12.5" fill="#64748B">PK</text>
+  <text x="473" y="158" font-size="13" fill="#0F172A" font-weight="600">negocio_id</text>
+  <text x="565" y="158" font-size="12.5" fill="#64748B">FK → negocios</text>
+  <text x="473" y="182" font-size="13" fill="#475569">nombre</text>
+  <text x="473" y="204" font-size="13" fill="#475569">telefono</text>
+  <text x="473" y="226" font-size="13" fill="#475569">limite_credito</text>
+  <text x="473" y="248" font-size="13" fill="#475569">nfc_uid</text>
+  <text x="565" y="248" font-size="12.5" fill="#64748B">único por negocio</text>
+  <text x="473" y="270" font-size="13" fill="#475569">token_portal</text>
+  <text x="575" y="270" font-size="12.5" fill="#64748B">único</text>
+  <text x="473" y="292" font-size="13" fill="#475569">token_activo</text>
+  <text x="575" y="292" font-size="12.5" fill="#64748B">revoca el llavero</text>
+  <text x="473" y="322" font-size="12.5" font-style="italic" fill="#059669">nfc_uid y token_portal pueden ir vacíos</text>
+
+  <!-- ====================== transacciones ====================== -->
+  <rect x="910" y="70" width="330" height="268" rx="12" fill="#F8FAFC" stroke="#D8DEE6" stroke-width="1.5"/>
+  <rect x="910" y="70" width="330" height="38" rx="12" fill="#0F172A"/>
+  <rect x="910" y="94" width="330" height="14" fill="#0F172A"/>
+  <text x="928" y="96" font-size="16" font-weight="600" fill="#FFFFFF">transacciones</text>
+  <text x="928" y="134" font-size="13" fill="#0F172A" font-weight="600">id</text>
+  <text x="960" y="134" font-size="12.5" fill="#64748B">PK · lo genera el teléfono</text>
+  <text x="928" y="158" font-size="13" fill="#0F172A" font-weight="600">cliente_id + negocio_id</text>
+  <text x="928" y="178" font-size="12.5" fill="#64748B">FK compuesta → clientes</text>
+  <text x="928" y="202" font-size="13" fill="#475569">monto</text>
+  <text x="1000" y="202" font-size="12.5" fill="#64748B">entero · negativo = fiado</text>
+  <text x="928" y="224" font-size="13" fill="#475569">concepto</text>
+  <text x="928" y="246" font-size="13" fill="#475569">numero_boleta</text>
+  <text x="928" y="268" font-size="13" fill="#475569">es_offline</text>
+  <text x="928" y="290" font-size="13" fill="#475569">fecha_local · synced_at</text>
+  <text x="928" y="322" font-size="12.5" font-style="italic" fill="#059669">Libro inmutable: no se edita ni se borra</text>
+
+  <!-- ====================== vista ====================== -->
+  <rect x="455" y="420" width="785" height="150" rx="12" fill="#F8FAFC" stroke="#D8DEE6" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <rect x="455" y="420" width="785" height="38" rx="12" fill="#475569"/>
+  <rect x="455" y="444" width="785" height="14" fill="#475569"/>
+  <text x="473" y="446" font-size="16" font-weight="600" fill="#FFFFFF">v_clientes_saldo</text>
+  <text x="700" y="446" font-size="13" fill="#CBD5E1">vista · respeta los permisos de quien consulta</text>
+  <text x="473" y="486" font-size="13" fill="#475569">id · nombre · telefono · limite_credito · token_portal</text>
+  <text x="473" y="510" font-size="13" fill="#0F172A" font-weight="600">saldo</text>
+  <text x="530" y="510" font-size="12.5" fill="#64748B">suma del libro completo, no un campo guardado</text>
+  <text x="473" y="534" font-size="13" fill="#0F172A" font-weight="600">estado_riesgo</text>
+  <text x="590" y="534" font-size="12.5" fill="#64748B">derivado del tiempo desde el último abono</text>
+  <text x="473" y="558" font-size="12.5" font-style="italic" fill="#64748B">La aplicación lee de aquí: el saldo llega calculado y no se puede desincronizar del historial.</text>
+
+  <!-- ====================== relaciones ====================== -->
+  <line x1="330" y1="165" x2="455" y2="165" stroke="#64748B" stroke-width="1.8" marker-start="url(#uno)" marker-end="url(#pataGallo)"/>
+  <text x="352" y="155" font-size="13" font-weight="600" fill="#475569">1 : N</text>
+
+  <line x1="785" y1="165" x2="910" y2="165" stroke="#64748B" stroke-width="1.8" marker-start="url(#uno)" marker-end="url(#pataGallo)"/>
+  <text x="807" y="155" font-size="13" font-weight="600" fill="#475569">1 : N</text>
+
+  <path d="M 620 338 L 620 420" fill="none" stroke="#94A3B8" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <path d="M 1075 338 L 1075 390 L 900 390 L 900 420" fill="none" stroke="#94A3B8" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <text x="640" y="380" font-size="12" fill="#64748B">la vista se arma con ambas tablas</text>
+
+  <!-- ====================== nota al pie ====================== -->
+  <rect x="40" y="610" width="1200" height="74" rx="11" fill="#F1F5F9"/>
+  <text x="62" y="640" font-size="14" font-weight="600" fill="#0F172A">Por qué la llave foránea es compuesta</text>
+  <text x="62" y="661" font-size="13.5" fill="#475569">Con una llave simple se podía registrar un movimiento combinando el cliente de un negocio con el identificador de otro, y como el libro es inmutable</text>
+  <text x="62" y="680" font-size="13.5" fill="#475569">ese registro no se podría corregir borrándolo. La llave sobre (cliente_id, negocio_id) lo impide en el motor.</text>
+</svg>
