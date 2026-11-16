@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -15,6 +16,34 @@ class AlmacenLocal {
   static const _claveNegocio = 'cache_negocio';
   static const _claveFecha = 'cache_fecha';
   static const _claveCola = 'cola_movimientos';
+
+  /// Almacen cifrado para lo que son datos personales de terceros.
+  ///
+  /// Cumple el RNF03 del proyecto: la informacion financiera guardada en el
+  /// telefono para trabajar sin conexion va cifrada. La llave la custodia el
+  /// almacen de claves de Android, no la aplicacion, asi que no viaja en el
+  /// codigo ni se puede sacar leyendo el APK.
+  ///
+  /// Solo se cifra lo que identifica a una persona: la lista de clientes con
+  /// sus saldos y la cola de movimientos sin enviar. El nombre del propio
+  /// negocio y la fecha del ultimo refresco siguen en el almacenamiento
+  /// comun, porque no son datos de terceros y cifrarlos solo haria mas lenta
+  /// la partida de la aplicacion.
+  static const _seguro = FlutterSecureStorage();
+
+  /// Pasa a cifrado lo que quedo guardado en claro por una version anterior.
+  ///
+  /// Sin esto, a quien ya tenia la aplicacion instalada le seguiria quedando
+  /// la lista de clientes en texto plano en el telefono para siempre, y el
+  /// requisito quedaria cumplido solo para instalaciones nuevas.
+  static Future<void> _migrarSiHaceFalta(SharedPreferences prefs) async {
+    for (final clave in [_claveClientes, _claveCola]) {
+      final enClaro = prefs.getString(clave);
+      if (enClaro == null) continue;
+      await _seguro.write(key: clave, value: enClaro);
+      await prefs.remove(clave);
+    }
+  }
 
   /// Cuántos movimientos esperan ser enviados.
   ///
@@ -32,7 +61,7 @@ class AlmacenLocal {
     String negocio,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_claveClientes, jsonEncode(clientes));
+    await _seguro.write(key: _claveClientes, value: jsonEncode(clientes));
     await prefs.setString(_claveNegocio, negocio);
     await prefs.setString(_claveFecha, DateTime.now().toIso8601String());
   }
@@ -40,7 +69,8 @@ class AlmacenLocal {
   static Future<({List<Map<String, dynamic>> clientes, String negocio,
       DateTime? fecha})?> leerClientes() async {
     final prefs = await SharedPreferences.getInstance();
-    final crudo = prefs.getString(_claveClientes);
+    await _migrarSiHaceFalta(prefs);
+    final crudo = await _seguro.read(key: _claveClientes);
     if (crudo == null) return null;
 
     try {
@@ -62,25 +92,21 @@ class AlmacenLocal {
 
   /// Deja un movimiento esperando a que vuelva la señal.
   static Future<void> encolar(Map<String, dynamic> movimiento) async {
-    final prefs = await SharedPreferences.getInstance();
-    final cola = await _leerCola(prefs);
+    final cola = await _leerCola();
     cola.add(movimiento);
-    await prefs.setString(_claveCola, jsonEncode(cola));
+    await _seguro.write(key: _claveCola, value: jsonEncode(cola));
     pendientes.value = cola.length;
   }
 
-  static Future<List<Map<String, dynamic>>> colaPendiente() async {
-    return _leerCola(await SharedPreferences.getInstance());
-  }
+  static Future<List<Map<String, dynamic>>> colaPendiente() => _leerCola();
 
   static Future<void> refrescarConteo() async {
     pendientes.value = (await colaPendiente()).length;
   }
 
-  static Future<List<Map<String, dynamic>>> _leerCola(
-    SharedPreferences prefs,
-  ) async {
-    final crudo = prefs.getString(_claveCola);
+  static Future<List<Map<String, dynamic>>> _leerCola() async {
+    await _migrarSiHaceFalta(await SharedPreferences.getInstance());
+    final crudo = await _seguro.read(key: _claveCola);
     if (crudo == null) return [];
     try {
       return (jsonDecode(crudo) as List).cast<Map<String, dynamic>>().toList();
@@ -99,8 +125,7 @@ class AlmacenLocal {
   /// perdió, el segundo intento choca con la llave primaria y se descarta en
   /// vez de duplicar el cobro.
   static Future<int> sincronizar() async {
-    final prefs = await SharedPreferences.getInstance();
-    final cola = await _leerCola(prefs);
+    final cola = await _leerCola();
     if (cola.isEmpty) return 0;
 
     final supabase = Supabase.instance.client;
@@ -121,7 +146,7 @@ class AlmacenLocal {
       }
     }
 
-    await prefs.setString(_claveCola, jsonEncode(quedan));
+    await _seguro.write(key: _claveCola, value: jsonEncode(quedan));
     pendientes.value = quedan.length;
     return enviados;
   }
@@ -134,10 +159,14 @@ class AlmacenLocal {
   /// negocio no pueden quedar en el teléfono para que los vea el siguiente.
   static Future<void> limpiar() async {
     final prefs = await SharedPreferences.getInstance();
+    await _seguro.delete(key: _claveClientes);
+    await _seguro.delete(key: _claveCola);
+    // Tambien se borran del almacenamiento comun por si quedaron ahi de una
+    // version anterior y nunca se alcanzo a migrarlos.
     await prefs.remove(_claveClientes);
+    await prefs.remove(_claveCola);
     await prefs.remove(_claveNegocio);
     await prefs.remove(_claveFecha);
-    await prefs.remove(_claveCola);
     pendientes.value = 0;
   }
 }

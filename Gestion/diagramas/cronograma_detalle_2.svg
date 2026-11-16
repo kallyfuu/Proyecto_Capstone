@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 556" width="1280" height="556" font-family="Segoe UI, Calibri, Helvetica, Arial, sans-serif">
+<rect x="0" y="0" width="1280" height="556" fill="#FFFFFF"/>
+<rect x="600.0" y="8" width="147.1" height="26" fill="#0F172A"/>
+<text x="673.6" y="26" font-size="14" font-weight="600" fill="#FFFFFF" text-anchor="middle">AGOSTO</text>
+<rect x="747.1" y="8" width="147.1" height="26" fill="#1E293B"/>
+<text x="820.7" y="26" font-size="14" font-weight="600" fill="#FFFFFF" text-anchor="middle">SEPTIEMBRE</text>
+<rect x="894.2" y="8" width="147.1" height="26" fill="#0F172A"/>
+<text x="967.8" y="26" font-size="14" font-weight="600" fill="#FFFFFF" text-anchor="middle">OCTUBRE</text>
+<rect x="1041.3" y="8" width="147.1" height="26" fill="#1E293B"/>
+<text x="1114.9" y="26" font-size="14" font-weight="600" fill="#FFFFFF" text-anchor="middle">NOVIEMBRE</text>
+<rect x="1188.4" y="8" width="73.6" height="26" fill="#0F172A"/>
+<text x="1225.2" y="26" font-size="14" font-weight="600" fill="#FFFFFF" text-anchor="middle">DIC.</text>
+<text x="618.4" y="52" font-size="12" fill="#475569" text-anchor="middle">S1</text>
+<text x="655.2" y="52" font-size="12" fill="#475569" text-anchor="middle">S2</text>
+<text x="691.9" y="52" font-size="12" fill="#475569" text-anchor="middle">S3</text>
+<text x="728.7" y="52" font-size="12" fill="#475569" text-anchor="middle">S4</text>
+<text x="765.5" y="52" font-size="12" fill="#475569" text-anchor="middle">S5</text>
+<text x="802.3" y="52" font-size="12" fill="#475569" text-anchor="middle">S6</text>
+<text x="839.1" y="52" font-size="12" fill="#475569" text-anchor="middle">S7</text>
+<text x="875.8" y="52" font-size="12" fill="#475569" text-anchor="middle">S8</text>
+<text x="912.6" y="52" font-size="12" fill="#475569" text-anchor="middle">S9</text>
+<text x="949.4" y="52" font-size="12" fill="#475569" text-anchor="middle">S10</text>
+<text x="986.2" y="52" font-size="12" fill="#475569" text-anchor="middle">S11</text>
+<text x="1022.9" y="52" font-size="12" fill="#475569" text-anchor="middle">S12</text>
+<text x="1059.7" y="52" font-size="12" fill="#475569" text-anchor="middle">S13</text>
+<text x="1096.5" y="52" font-size="12" fill="#475569" text-anchor="middle">S14</text>
+<text x="1133.3" y="52" font-size="12" fill="#475569" text-anchor="middle">S15</text>
+<text x="1170.1" y="52" font-size="12" fill="#475569" text-anchor="middle">S16</text>
+<text x="1206.8" y="52" font-size="12" fill="#475569" text-anchor="middle">S17</text>
+<text x="1243.6" y="52" font-size="12" fill="#475569" text-anchor="middle">S18</text>
+<rect x="18" y="13" width="22" height="13" rx="3" fill="#1E8E3E"/>
+<text x="48" y="24" font-size="12.5" fill="#475569">Completado</text>
+<rect x="146" y="13" width="22" height="13" rx="3" fill="#2E5EAA"/>
+<text x="176" y="24" font-size="12.5" fill="#475569">Pendiente</text>
+<rect x="268" y="13" width="13" height="13" transform="rotate(45 274.5 19.5)" fill="#1B3B6F"/>
+<text x="296" y="24" font-size="12.5" fill="#475569">Hito</text>
+<text x="18" y="52" font-size="12" font-weight="600" fill="#475569">TAREA</text>
+<text x="476" y="52" font-size="12" font-weight="600" fill="#475569">RESPONSABLE</text>
+<rect x="12" y="62" width="1250" height="24" fill="#E8EDF3"/>
+<rect x="12" y="86" width="1250" height="24" fill="#F8FAFC"/>
+<rect x="12" y="134" width="1250" height="24" fill="#F8FAFC"/>
+<rect x="12" y="182" width="1250" height="24" fill="#E8EDF3"/>
+<rect x="12" y="230" width="1250" height="24" fill="#F8FAFC"/>
+<rect x="12" y="278" width="1250" height="24" fill="#F8FAFC"/>
+<rect x="12" y="302" width="1250" height="24" fill="#E8EDF3"/>
+<rect x="12" y="326" width="1250" height="24" fill="#F8FAFC"/>
+<rect x="12" y="374" width="1250" height="24" fill="#F8FAFC"/>
+<rect x="12" y="422" width="1250" height="24" fill="#F8FAFC"/>
+<rect x="12" y="470" width="1250" height="24" fill="#F8FAFC"/>
+<rect x="12" y="518" width="1250" height="24" fill="#F8FAFC"/>
+<line x1="600.0" y1="62" x2="600.0" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="636.8" y1="62" x2="636.8" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="673.6" y1="62" x2="673.6" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="710.3" y1="62" x2="710.3" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="747.1" y1="62" x2="747.1" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="783.9" y1="62" x2="783.9" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="820.7" y1="62" x2="820.7" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="857.4" y1="62" x2="857.4" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="894.2" y1="62" x2="894.2" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="931.0" y1="62" x2="931.0" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="967.8" y1="62" x2="967.8" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="1004.6" y1="62" x2="1004.6" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="1041.3" y1="62" x2="1041.3" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="1078.1" y1="62" x2="1078.1" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="1114.9" y1="62" x2="1114.9" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="1151.7" y1="62" x2="1151.7" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="1188.4" y1="62" x2="1188.4" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="1225.2" y1="62" x2="1225.2" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<line x1="1262.0" y1="62" x2="1262.0" y2="542" stroke="#E2E8F0" stroke-width="1"/>
+<text x="18" y="79" font-size="13.5" font-weight="700" fill="#0F172A">FASE 4 - LLAVERO NFC Y PORTAL DEL CLIENTE</text>
+<text x="28" y="103" font-size="13" font-weight="400" fill="#1E293B">4.1  Gestión del proyecto: carta Gantt y documentación en el repo…</text>
+<text x="476" y="103" font-size="12" fill="#64748B">Bastián</text>
+<rect x="859.4" y="91" width="32.8" height="14" rx="4" fill="#1E8E3E"/>
+<text x="28" y="127" font-size="13" font-weight="400" fill="#1E293B">4.2  Lectura del llavero NFC y asociación al cliente</text>
+<text x="476" y="127" font-size="12" fill="#64748B">Equipo</text>
+<rect x="859.4" y="115" width="69.6" height="14" rx="4" fill="#1E8E3E"/>
+<text x="28" y="151" font-size="13" font-weight="400" fill="#1E293B">4.3  Portal web del cliente con enlace revocable</text>
+<text x="476" y="151" font-size="12" fill="#64748B">Bastián</text>
+<rect x="859.4" y="139" width="32.8" height="14" rx="4" fill="#1E8E3E"/>
+<text x="28" y="175" font-size="13" font-weight="600" fill="#1E293B">4.4  HITO: Segunda demostración funcional (nota 6,5)</text>
+<text x="476" y="175" font-size="12" fill="#64748B">Equipo</text>
+<rect x="905.6" y="163.0" width="14" height="14" transform="rotate(45 912.6 170.0)" fill="#1B3B6F"/>
+<text x="18" y="199" font-size="13.5" font-weight="700" fill="#0F172A">FASE 5 - MEJORAS PEDIDAS EN LA RETROALIMENTACIÓN</text>
+<text x="28" y="223" font-size="13" font-weight="400" fill="#1E293B">5.1  Límite de crédito visible y aviso al superarlo</text>
+<text x="476" y="223" font-size="12" fill="#64748B">Bastián</text>
+<rect x="1006.6" y="211" width="32.8" height="14" rx="4" fill="#1E8E3E"/>
+<text x="28" y="247" font-size="13" font-weight="400" fill="#1E293B">5.2  Número de boleta asociado a cada movimiento</text>
+<text x="476" y="247" font-size="12" fill="#64748B">Felipe</text>
+<rect x="1006.6" y="235" width="32.8" height="14" rx="4" fill="#1E8E3E"/>
+<text x="28" y="271" font-size="13" font-weight="400" fill="#1E293B">5.3  Modo oscuro de la aplicación</text>
+<text x="476" y="271" font-size="12" fill="#64748B">Marcelo</text>
+<rect x="1006.6" y="259" width="32.8" height="14" rx="4" fill="#1E8E3E"/>
+<text x="28" y="295" font-size="13" font-weight="600" fill="#1E293B">5.4  HITO: Entrega de avance de Fase 2</text>
+<text x="476" y="295" font-size="12" fill="#64748B">Equipo</text>
+<rect x="1015.9" y="283.0" width="14" height="14" transform="rotate(45 1022.9 290.0)" fill="#1B3B6F"/>
+<text x="18" y="319" font-size="13.5" font-weight="700" fill="#0F172A">FASE 6 - PANEL DE INDICADORES Y CIERRE</text>
+<text x="28" y="343" font-size="13" font-weight="400" fill="#1E293B">6.1  Panel de indicadores del negocio</text>
+<text x="476" y="343" font-size="12" fill="#64748B">Equipo</text>
+<rect x="1006.6" y="331" width="106.3" height="14" rx="4" fill="#1E8E3E"/>
+<text x="28" y="367" font-size="13" font-weight="400" fill="#1E293B">6.2  Modo sin conexión: ver y registrar fiados sin señal</text>
+<text x="476" y="367" font-size="12" fill="#64748B">Bastián</text>
+<rect x="1006.6" y="355" width="143.1" height="14" rx="4" fill="#1E8E3E"/>
+<text x="28" y="391" font-size="13" font-weight="400" fill="#1E293B">6.3  Enlace del portal grabado en el llavero (NDEF)</text>
+<text x="476" y="391" font-size="12" fill="#64748B">Bastián</text>
+<rect x="1116.9" y="379" width="32.8" height="14" rx="4" fill="#1E8E3E"/>
+<text x="28" y="415" font-size="13" font-weight="400" fill="#1E293B">6.4  Respaldo exportable del libro de fiados</text>
+<text x="476" y="415" font-size="12" fill="#64748B">Bastián</text>
+<rect x="1116.9" y="403" width="32.8" height="14" rx="4" fill="#1E8E3E"/>
+<text x="28" y="439" font-size="13" font-weight="400" fill="#1E293B">6.5  Cifrado del almacenamiento local (RNF03)</text>
+<text x="476" y="439" font-size="12" fill="#64748B">Bastián</text>
+<rect x="1116.9" y="427" width="32.8" height="14" rx="4" fill="#1E8E3E"/>
+<text x="28" y="463" font-size="13" font-weight="400" fill="#1E293B">6.6  Protección de datos: aviso al cliente y anexo Ley 21.719</text>
+<text x="476" y="463" font-size="12" fill="#64748B">Bastián</text>
+<rect x="1116.9" y="451" width="32.8" height="14" rx="4" fill="#1E8E3E"/>
+<text x="28" y="487" font-size="13" font-weight="400" fill="#1E293B">6.7  Piloto en terreno y pruebas integrales</text>
+<text x="476" y="487" font-size="12" fill="#64748B">Equipo</text>
+<rect x="1116.9" y="475" width="106.3" height="14" rx="4" fill="#2E5EAA"/>
+<text x="28" y="511" font-size="13" font-weight="400" fill="#1E293B">6.8  Informe final, manual de usuario y presentación</text>
+<text x="476" y="511" font-size="12" fill="#64748B">Equipo</text>
+<rect x="1116.9" y="499" width="143.1" height="14" rx="4" fill="#2E5EAA"/>
+<text x="28" y="535" font-size="13" font-weight="600" fill="#1E293B">6.9  HITO: Presentación final a la comisión</text>
+<text x="476" y="535" font-size="12" fill="#64748B">Equipo</text>
+<rect x="1236.6" y="523.0" width="14" height="14" transform="rotate(45 1243.6 530.0)" fill="#1B3B6F"/>
+</svg>

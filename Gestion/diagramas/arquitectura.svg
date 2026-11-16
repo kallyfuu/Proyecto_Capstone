@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" font-family="Segoe UI, Calibri, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B"/>
+    </marker>
+    <marker id="flechaVerde" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"/>
+    </marker>
+  </defs>
+
+  <!-- El panel propio hace que el diagrama se lea igual sobre una diapositiva
+       clara o una oscura, sin depender del tema del PPT. -->
+  <rect x="0" y="0" width="1280" height="720" rx="18" fill="#FFFFFF"/>
+
+  <!-- ====================== Teléfono del vendedor ====================== -->
+  <rect x="40" y="70" width="330" height="250" rx="14" fill="#F8FAFC" stroke="#D8DEE6" stroke-width="1.5"/>
+  <rect x="40" y="70" width="330" height="42" rx="14" fill="#059669"/>
+  <rect x="40" y="98" width="330" height="14" fill="#059669"/>
+  <text x="60" y="98" font-size="17" font-weight="600" fill="#FFFFFF">Teléfono del vendedor</text>
+
+  <text x="60" y="140" font-size="15" font-weight="600" fill="#0F172A">Aplicación Flutter (Android)</text>
+  <text x="60" y="164" font-size="13.5" fill="#475569">Identificación por NFC</text>
+  <text x="60" y="185" font-size="13.5" fill="#475569">Registro de fiados y abonos</text>
+  <text x="60" y="206" font-size="13.5" fill="#475569">Panel de indicadores</text>
+
+  <line x1="60" y1="224" x2="350" y2="224" stroke="#E2E8F0" stroke-width="1.5"/>
+
+  <text x="60" y="248" font-size="15" font-weight="600" fill="#0F172A">Almacenamiento local cifrado</text>
+  <text x="60" y="272" font-size="13.5" fill="#475569">Última vista de clientes</text>
+  <text x="60" y="293" font-size="13.5" fill="#475569">Cola de movimientos pendientes</text>
+
+  <!-- ====================== Servicios de datos ====================== -->
+  <rect x="475" y="70" width="330" height="250" rx="14" fill="#F8FAFC" stroke="#D8DEE6" stroke-width="1.5"/>
+  <rect x="475" y="70" width="330" height="42" rx="14" fill="#0F172A"/>
+  <rect x="475" y="98" width="330" height="14" fill="#0F172A"/>
+  <text x="495" y="98" font-size="17" font-weight="600" fill="#FFFFFF">Servicios de datos</text>
+
+  <text x="495" y="140" font-size="15" font-weight="600" fill="#0F172A">Supabase · PostgreSQL</text>
+  <text x="495" y="164" font-size="13.5" fill="#475569">Autenticación del vendedor</text>
+  <text x="495" y="185" font-size="13.5" fill="#475569">negocios · clientes · transacciones</text>
+  <text x="495" y="206" font-size="13.5" fill="#475569">Vista de saldos ya calculados</text>
+
+  <line x1="495" y1="224" x2="785" y2="224" stroke="#E2E8F0" stroke-width="1.5"/>
+
+  <rect x="495" y="236" width="290" height="68" rx="9" fill="#ECFDF5" stroke="#059669" stroke-width="1.5"/>
+  <text x="510" y="259" font-size="14" font-weight="600" fill="#065F46">Políticas de seguridad por fila</text>
+  <text x="510" y="279" font-size="12.5" fill="#047857">El aislamiento entre negocios se</text>
+  <text x="510" y="295" font-size="12.5" fill="#047857">evalúa aquí, no en la aplicación</text>
+
+  <!-- ====================== Portal del cliente ====================== -->
+  <rect x="910" y="70" width="330" height="250" rx="14" fill="#F8FAFC" stroke="#D8DEE6" stroke-width="1.5"/>
+  <rect x="910" y="70" width="330" height="42" rx="14" fill="#0F172A"/>
+  <rect x="910" y="98" width="330" height="14" fill="#0F172A"/>
+  <text x="930" y="98" font-size="17" font-weight="600" fill="#FFFFFF">Portal del cliente</text>
+
+  <text x="930" y="140" font-size="15" font-weight="600" fill="#0F172A">Sitio web estático</text>
+  <text x="930" y="164" font-size="13.5" fill="#475569">Solo lectura, sin sesión</text>
+  <text x="930" y="185" font-size="13.5" fill="#475569">Acceso por token revocable</text>
+  <text x="930" y="206" font-size="13.5" fill="#475569">Aviso de privacidad al titular</text>
+
+  <line x1="930" y1="224" x2="1220" y2="224" stroke="#E2E8F0" stroke-width="1.5"/>
+
+  <text x="930" y="250" font-size="13.5" fill="#475569">Si el llavero se pierde, el negocio</text>
+  <text x="930" y="271" font-size="13.5" fill="#475569">anula el token y este enlace deja</text>
+  <text x="930" y="292" font-size="13.5" fill="#475569">de funcionar de inmediato</text>
+
+  <!-- ====================== Llavero ====================== -->
+  <rect x="190" y="430" width="300" height="130" rx="14" fill="#FFFFFF" stroke="#059669" stroke-width="2"/>
+  <text x="210" y="462" font-size="16" font-weight="600" fill="#065F46">Llavero NFC · NTAG215</text>
+  <text x="210" y="492" font-size="13.5" fill="#475569">UID de fábrica, no reescribible</text>
+  <text x="210" y="515" font-size="13.5" fill="#475569">NDEF: enlace al portal</text>
+  <text x="210" y="540" font-size="13" font-style="italic" fill="#059669">Sin nombre ni deuda del cliente</text>
+
+  <!-- ====================== Teléfono del cliente ====================== -->
+  <rect x="700" y="430" width="300" height="130" rx="14" fill="#FFFFFF" stroke="#D8DEE6" stroke-width="1.5"/>
+  <text x="720" y="462" font-size="16" font-weight="600" fill="#0F172A">Teléfono del cliente</text>
+  <text x="720" y="492" font-size="13.5" fill="#475569">Cualquier equipo con NFC</text>
+  <text x="720" y="515" font-size="13.5" fill="#475569">No instala la aplicación</text>
+  <text x="720" y="540" font-size="13.5" fill="#475569">No necesita cuenta</text>
+
+  <!-- ====================== Flujos ====================== -->
+  <line x1="370" y1="150" x2="475" y2="150" stroke="#64748B" stroke-width="2" marker-end="url(#flecha)" marker-start="url(#flecha)"/>
+  <text x="383" y="140" font-size="12.5" fill="#475569">HTTPS</text>
+  <text x="378" y="172" font-size="12" fill="#64748B">sesión del vendedor</text>
+
+  <line x1="805" y1="150" x2="910" y2="150" stroke="#64748B" stroke-width="2" marker-end="url(#flecha)" marker-start="url(#flecha)"/>
+  <text x="812" y="140" font-size="12.5" fill="#475569">consulta por token</text>
+  <text x="820" y="172" font-size="12" fill="#64748B">solo esa cuenta</text>
+
+  <path d="M 205 320 L 205 430" fill="none" stroke="#059669" stroke-width="2" marker-end="url(#flechaVerde)" marker-start="url(#flechaVerde)"/>
+  <text x="60" y="360" font-size="12.5" fill="#047857">El vendedor lee el UID</text>
+  <text x="60" y="380" font-size="12.5" fill="#047857">y graba el enlace</text>
+
+  <line x1="490" y1="495" x2="700" y2="495" stroke="#059669" stroke-width="2" marker-end="url(#flechaVerde)"/>
+  <text x="508" y="485" font-size="12.5" fill="#047857">el cliente acerca su llavero</text>
+
+  <path d="M 1000 470 L 1075 470 L 1075 320" fill="none" stroke="#64748B" stroke-width="2" marker-end="url(#flecha)"/>
+  <text x="1010" y="412" font-size="12.5" fill="#475569">se abre el navegador</text>
+
+  <!-- ====================== Nota al pie ====================== -->
+  <rect x="40" y="610" width="1200" height="74" rx="11" fill="#F1F5F9"/>
+  <text x="62" y="640" font-size="14" font-weight="600" fill="#0F172A">Dos usos del mismo llavero</text>
+  <text x="62" y="661" font-size="13.5" fill="#475569">El vendedor lo usa para identificar al cliente por su UID de fábrica. El cliente lo usa para abrir su estado de cuenta desde el registro NDEF.</text>
+  <text x="62" y="680" font-size="13.5" fill="#475569">El UID no sirve como autenticación: quien confirma cada movimiento es el vendedor con su sesión iniciada.</text>
+</svg>
