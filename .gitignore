@@ -4,3 +4,6 @@ replay_pid*.log
 
 # Archivos de bloqueo que Office crea mientras un documento esta abierto.
 ~$*
+
+# Capturas de la aplicacion: ya estan incrustadas en el informe.
+Gestion/Capturas/
