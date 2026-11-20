@@ -7,3 +7,6 @@ replay_pid*.log
 
 # Capturas de la aplicacion: ya estan incrustadas en el informe.
 Gestion/Capturas/
+
+# Capturas de la base de datos: ya estan dentro del documento de evidencias.
+Gestion/Capturas BD/
