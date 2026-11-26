@@ -149,7 +149,38 @@ class _NuevoClienteSheetState extends State<NuevoClienteSheet> {
               'Nombre y teléfono son obligatorios',
               style: TextStyle(color: AppTheme.textoTenueDe(context)),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppTheme.acentoDe(context).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppTheme.acentoDe(context).withValues(alpha: 0.20),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.privacy_tip_outlined,
+                    size: 16,
+                    color: AppTheme.acentoDe(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Ley 21.719: Datos usados exclusivamente para el fiado. El cliente puede consultar su estado con su llavero NFC.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        height: 1.3,
+                        color: AppTheme.textoTenueDe(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             TextField(
               controller: _nombreCtrl,
               autofocus: true,

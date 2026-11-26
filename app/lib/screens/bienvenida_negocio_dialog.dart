@@ -192,15 +192,39 @@ class _BienvenidaNegocioDialogState extends State<BienvenidaNegocioDialog> {
         throw StateError('No hay sesión activa.');
       }
 
-      // 1. Guardamos directamente en la tabla `negocios` de Supabase.
-      await supabase.from('negocios').upsert({
+      final meta = user.userMetadata ?? const <String, dynamic>{};
+      final aceptoTerminos = meta['acepto_terminos'] == true;
+      final fechaTerminos = meta['fecha_aceptacion_terminos']?.toString();
+      final versionTerminos = (meta['version_terminos'] ?? '1.0').toString();
+
+      final datosBase = <String, dynamic>{
         'id': user.id,
         'nombre_dueno': dueno,
         'nombre_negocio': negocio,
         'direccion': direccion,
         'correo': correo,
         'telefono': telefono,
-      });
+      };
+
+      // 1. Guardamos directamente en la tabla `negocios` de Supabase,
+      // incluyendo la evidencia de aceptación de términos si existe en Auth.
+      try {
+        await supabase.from('negocios').upsert({
+          ...datosBase,
+          if (aceptoTerminos) ...{
+            'acepto_terminos': true,
+            'fecha_aceptacion_terminos':
+                fechaTerminos ?? DateTime.now().toUtc().toIso8601String(),
+            'version_terminos': versionTerminos,
+          },
+        });
+      } on PostgrestException catch (e) {
+        if (e.code == 'PGRST204' || e.code == '42703') {
+          await supabase.from('negocios').upsert(datosBase);
+        } else {
+          rethrow;
+        }
+      }
 
       // 2. Guardamos tambien en los metadatos del usuario de Supabase Auth.
       await supabase.auth.updateUser(

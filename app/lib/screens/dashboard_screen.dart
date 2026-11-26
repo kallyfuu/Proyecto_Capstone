@@ -81,6 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (!mounted) return;
 
       final fila = negocios.isEmpty ? null : negocios.first;
+      unawaited(_sincronizarTerminosSiFalta(fila));
       final nombreBase =
           (fila?['nombre_negocio'] ?? fila?['nombre'] ?? 'Mi almacén')
               .toString();
@@ -190,6 +191,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _error = '$e';
         _cargando = false;
       });
+    }
+  }
+
+  /// Si el usuario aceptó los términos al registrarse (guardado en userMetadata)
+  /// pero la fila en `public.negocios` aún no tiene `acepto_terminos = true`,
+  /// sincroniza las columnas de consentimiento de la Ley N° 21.719.
+  Future<void> _sincronizarTerminosSiFalta(
+    Map<String, dynamic>? filaNegocio,
+  ) async {
+    if (filaNegocio == null || filaNegocio['acepto_terminos'] == true) return;
+
+    final user = _supabase.auth.currentUser;
+    final meta = user?.userMetadata;
+    if (user == null || meta == null || meta['acepto_terminos'] != true) return;
+
+    try {
+      await _supabase
+          .from('negocios')
+          .update({
+            'acepto_terminos': true,
+            'fecha_aceptacion_terminos':
+                meta['fecha_aceptacion_terminos']?.toString() ??
+                DateTime.now().toUtc().toIso8601String(),
+            'version_terminos': (meta['version_terminos'] ?? '1.0').toString(),
+          })
+          .eq('id', user.id);
+    } catch (_) {
+      // Si aún no se corre el script SQL en Supabase, no interrumpimos la pantalla.
     }
   }
 

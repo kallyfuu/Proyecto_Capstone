@@ -16,6 +16,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  static const String _versionTerminos = '1.0';
+
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
@@ -36,6 +38,15 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _enviar() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Conforme a la Ley N° 21.719, el registro de un nuevo usuario responsable
+    // requiere consentimiento informado y aceptación expresa de términos.
+    String? fechaAceptacion;
+    if (_modoRegistro) {
+      final acepto = await _mostrarDialogoTerminos();
+      if (acepto != true) return;
+      fechaAceptacion = DateTime.now().toUtc().toIso8601String();
+    }
+
     setState(() {
       _cargando = true;
       _error = null;
@@ -47,9 +58,18 @@ class _LoginScreenState extends State<LoginScreen> {
       final password = _passCtrl.text;
 
       if (_modoRegistro) {
-        final respuesta = await auth.signUp(email: email, password: password);
+        final respuesta = await auth.signUp(
+          email: email,
+          password: password,
+          data: {
+            'acepto_terminos': true,
+            'fecha_aceptacion_terminos': fechaAceptacion,
+            'version_terminos': _versionTerminos,
+          },
+        );
         // Si Supabase pide confirmar el correo antes de abrir sesion,
-        // avisamos con una ventana emergente y volvemos al modo login.
+        // el trigger SQL copia el consentimiento desde user_metadata a
+        // public.negocios; avisamos con ventana emergente y volvemos al login.
         if (respuesta.session == null) {
           if (mounted) {
             setState(() => _cargando = false);
@@ -63,6 +83,22 @@ class _LoginScreenState extends State<LoginScreen> {
             }
           }
           return;
+        }
+        // Si la sesion se abrio de inmediato, actualizamos tambien la fila en
+        // public.negocios directamente.
+        if (respuesta.user != null) {
+          try {
+            await Supabase.instance.client
+                .from('negocios')
+                .update({
+                  'acepto_terminos': true,
+                  'fecha_aceptacion_terminos': fechaAceptacion,
+                  'version_terminos': _versionTerminos,
+                })
+                .eq('id', respuesta.user!.id);
+          } catch (_) {
+            // Si la migracion SQL aun no se ha corrido, se sincroniza luego en Dashboard.
+          }
         }
       } else {
         await auth.signInWithPassword(email: email, password: password);
@@ -94,6 +130,16 @@ class _LoginScreenState extends State<LoginScreen> {
     final visibles = usuario.substring(0, 2);
     final ocultos = 'x' * (usuario.length - 2);
     return '$visibles$ocultos@$dominio';
+  }
+
+  /// Muestra el pop-up de aceptación de Términos y Condiciones y Tratamiento
+  /// de Datos Personales bajo la Ley N° 21.719 al registrar un nuevo usuario.
+  Future<bool?> _mostrarDialogoTerminos() {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const _DialogoTerminosLey(),
+    );
   }
 
   /// Muestra una ventana emergente avisando que debe confirmar su correo.
@@ -449,6 +495,261 @@ class _LoginScreenState extends State<LoginScreen> {
             _modoRegistro
                 ? 'Ya tengo cuenta, iniciar sesión'
                 : 'Soy nuevo, crear una cuenta',
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Diálogo emergente que solicita confirmación de Términos y Condiciones
+/// y explica el tratamiento de la información personal conforme a la Ley N° 21.719.
+class _DialogoTerminosLey extends StatefulWidget {
+  const _DialogoTerminosLey();
+
+  @override
+  State<_DialogoTerminosLey> createState() => _DialogoTerminosLeyState();
+}
+
+class _DialogoTerminosLeyState extends State<_DialogoTerminosLey> {
+  bool _expandido = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final acento = AppTheme.acentoDe(context);
+    final textoTenue = AppTheme.textoTenueDe(context);
+
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: BorderSide(color: AppTheme.bordeDe(context)),
+      ),
+      contentPadding: const EdgeInsets.fromLTRB(22, 20, 22, 12),
+      actionsPadding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+      icon: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: acento.withValues(alpha: 0.14),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.verified_user_outlined,
+          color: acento,
+          size: 28,
+        ),
+      ),
+      title: Column(
+        children: [
+          const Text(
+            'Términos y Privacidad',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 19),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Ley N° 21.719 de Protección de Datos Personales',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: acento,
+            ),
+          ),
+        ],
+      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 420,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.55,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: acento.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: acento.withValues(alpha: 0.22),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      color: acento,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Acepto los términos y condiciones de utilizar mi información personal para la gestión de mi cuenta y la administración del fiado.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.4,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Al registrarte, autorizas el tratamiento de tus datos para la prestación del servicio conforme a las normas de protección de datos.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  height: 1.4,
+                  color: textoTenue,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () => setState(() => _expandido = !_expandido),
+                  icon: Icon(
+                    _expandido
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: acento,
+                  ),
+                  label: Text(
+                    _expandido
+                        ? 'Ocultar información'
+                        : 'Leer más: ¿dónde se ocupa mi información?',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: acento,
+                    ),
+                  ),
+                ),
+              ),
+              AnimatedCrossFade(
+                firstChild: const SizedBox.shrink(),
+                secondChild: Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.fondoDe(context),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.bordeDe(context)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _seccionDetalle(
+                        context,
+                        titulo: '1. ¿Dónde se almacena tu información?',
+                        descripcion:
+                            'Tu correo y credenciales se almacenan en una base de datos segura (Supabase). Cada almacén cuenta con políticas de aislamiento a nivel de fila (Row Level Security), impidiendo que cualquier otro negocio acceda a tus datos.',
+                      ),
+                      const SizedBox(height: 10),
+                      _seccionDetalle(
+                        context,
+                        titulo: '2. ¿Para qué se ocupa?',
+                        descripcion:
+                            'Exclusivamente para autenticarte, sincronizar tus registros de fiados y abonos, respaldar la información de tu almacén y generar resúmenes contables.',
+                      ),
+                      const SizedBox(height: 10),
+                      _seccionDetalle(
+                        context,
+                        titulo: '3. Privacidad desde el diseño (Art. 14 quáter)',
+                        descripcion:
+                            'Los llaveros NFC entregados a tus clientes no almacenan nombres, teléfonos ni saldos. Solo portan un identificador seguro para consultar la cuenta en el servidor.',
+                      ),
+                      const SizedBox(height: 10),
+                      _seccionDetalle(
+                        context,
+                        titulo: '4. Tus derechos como titular (Derechos ARCO)',
+                        descripcion:
+                            'Conforme a la Ley N° 21.719, tienes derecho a acceder a tus datos, rectificarlos, solicitar su supresión (derecho al olvido) y oponerte al tratamiento.',
+                      ),
+                    ],
+                  ),
+                ),
+                crossFadeState: _expandido
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                duration: const Duration(milliseconds: 250),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(
+                  'Cancelar',
+                  style: TextStyle(
+                    color: textoTenue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: AppTheme.degradadoDe(context),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(
+                    'Aceptar',
+                    style: TextStyle(
+                      color: AppTheme.sobreAcentoDe(context),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _seccionDetalle(
+    BuildContext context, {
+    required String titulo,
+    required String descripcion,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          titulo,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          descripcion,
+          style: TextStyle(
+            fontSize: 11.5,
+            height: 1.35,
+            color: AppTheme.textoTenueDe(context),
           ),
         ),
       ],
